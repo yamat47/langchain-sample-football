@@ -1,4 +1,4 @@
-<div style="margin-bottom: 20px;">
+<div style="margin-bottom: 20px;" data-remove-initial-greeting>
   <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #1976d2;">
     <strong style="color: #1976d2;">You:</strong>
     <p style="margin: 5px 0 0 0;"><%= message %></p>
@@ -18,3 +18,13 @@
     <% end %>
   </div>
 </div>
+
+<script>
+  // Remove initial greeting when first message is added
+  document.addEventListener('DOMContentLoaded', () => {
+    const initialGreeting = document.getElementById('initial-greeting');
+    if (initialGreeting && document.querySelector('[data-remove-initial-greeting]')) {
+      initialGreeting.style.display = 'none';
+    }
+  });
+</script>

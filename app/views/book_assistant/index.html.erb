@@ -8,8 +8,9 @@
     <div>
       <div id="chat-container" style="background: #f5f5f5; border-radius: 8px; padding: 20px; min-height: 500px; display: flex; flex-direction: column;">
         <div id="messages" style="flex: 1; overflow-y: auto; margin-bottom: 20px;">
-          <div style="text-align: center; padding: 40px; color: #999;">
-            <p style="font-size: 1.2em; margin-bottom: 20px;">Welcome! I can help you find books.</p>
+          <div style="text-align: center; padding: 40px; color: #999;" id="initial-greeting">
+            <% greeting = Rails.application.config.book_assistant[:initial_greetings].sample %>
+            <p style="font-size: 1.2em; margin-bottom: 20px;"><%= greeting %></p>
             <p>Try asking me:</p>
             <ul style="list-style: none; padding: 0; text-align: left; display: inline-block;">
               <li style="margin: 10px 0;">• "What are the trending books?"</li>
