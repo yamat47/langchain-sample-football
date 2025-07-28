@@ -1,0 +1,20 @@
+<div style="margin-bottom: 20px;">
+  <div style="background: white; padding: 15px; border-radius: 8px; margin-bottom: 10px; border-left: 4px solid #1976d2;">
+    <strong style="color: #1976d2;">You:</strong>
+    <p style="margin: 5px 0 0 0;"><%= message %></p>
+  </div>
+  
+  <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; border-left: 4px solid #4caf50;">
+    <strong style="color: #4caf50;">Assistant:</strong>
+    <% if response[:success] %>
+      <p style="margin: 5px 0 0 0; white-space: pre-wrap;"><%= response[:message] %></p>
+      <% if response[:tools_used].present? %>
+        <small style="color: #666; display: block; margin-top: 10px;">
+          Tools used: <%= response[:tools_used].join(", ") %>
+        </small>
+      <% end %>
+    <% else %>
+      <p style="margin: 5px 0 0 0; color: #f44336;"><%= response[:message] %></p>
+    <% end %>
+  </div>
+</div>

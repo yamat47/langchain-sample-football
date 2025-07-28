@@ -1,4 +1,10 @@
 Rails.application.routes.draw do
+  resources :book_assistant, only: [:index] do
+    collection do
+      post :query
+    end
+  end
+  
   namespace :admin do
     get "dashboard", to: "dashboard#index"
     resources :books, only: [:index, :show] do
@@ -9,6 +15,8 @@ Rails.application.routes.draw do
     end
     resources :book_queries, only: [:index, :show]
   end
+  
+  root "book_assistant#index"
   
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
