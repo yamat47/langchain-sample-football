@@ -1,4 +1,15 @@
 Rails.application.routes.draw do
+  namespace :admin do
+    get "dashboard", to: "dashboard#index"
+    resources :books, only: [:index, :show] do
+      resources :reviews, only: [:index]
+      member do
+        get :similar
+      end
+    end
+    resources :book_queries, only: [:index, :show]
+  end
+  
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

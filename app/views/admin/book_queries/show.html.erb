@@ -1,0 +1,49 @@
+<div style="padding: 20px; font-family: system-ui, -apple-system, sans-serif;">
+  <%= link_to "← Back to Query Logs", admin_book_queries_path, style: "color: #1976d2; text-decoration: none; margin-bottom: 20px; display: inline-block;" %>
+  
+  <h1>Query Details</h1>
+  
+  <div style="display: grid; grid-template-columns: 200px 1fr; gap: 20px; background: white; padding: 20px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px;">
+    <div style="font-weight: bold;">Status:</div>
+    <div>
+      <% if @book_query.success %>
+        <span style="background: #4caf50; color: white; padding: 4px 12px; border-radius: 4px;">Success</span>
+      <% else %>
+        <span style="background: #f44336; color: white; padding: 4px 12px; border-radius: 4px;">Failed</span>
+      <% end %>
+    </div>
+    
+    <div style="font-weight: bold;">Timestamp:</div>
+    <div><%= @book_query.created_at.strftime("%Y-%m-%d %H:%M:%S") %></div>
+    
+    <div style="font-weight: bold;">Response Time:</div>
+    <div><%= @book_query.response_time_ms ? "#{@book_query.response_time_ms}ms" : "N/A" %></div>
+  </div>
+
+  <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+    <h3>Query Text</h3>
+    <pre style="background: white; padding: 15px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word;"><%= @book_query.query_text %></pre>
+  </div>
+
+  <% if @book_query.success %>
+    <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+      <h3>Response</h3>
+      <pre style="background: white; padding: 15px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word;"><%= @book_query.response_text %></pre>
+    </div>
+  <% else %>
+    <div style="background: #ffebee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+      <h3>Error Message</h3>
+      <pre style="background: white; padding: 15px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; color: #c62828;"><%= @book_query.error_message || @book_query.response_text %></pre>
+    </div>
+  <% end %>
+
+  <div style="margin-top: 20px;">
+    <% if @book_query.id > BookQuery.minimum(:id) %>
+      <%= link_to "← Previous Query", admin_book_query_path(BookQuery.where("id < ?", @book_query.id).order(:id).last), style: "color: #1976d2; text-decoration: none; margin-right: 20px;" %>
+    <% end %>
+    
+    <% if @book_query.id < BookQuery.maximum(:id) %>
+      <%= link_to "Next Query →", admin_book_query_path(BookQuery.where("id > ?", @book_query.id).order(:id).first), style: "color: #1976d2; text-decoration: none;" %>
+    <% end %>
+  </div>
+</div>
