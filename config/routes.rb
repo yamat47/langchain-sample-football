@@ -4,7 +4,7 @@ Rails.application.routes.draw do
       post :query
     end
   end
-  
+
   namespace :admin do
     root "dashboard#index"
     get "dashboard", to: "dashboard#index"
@@ -16,9 +16,9 @@ Rails.application.routes.draw do
     end
     resources :book_queries, only: [:index, :show]
   end
-  
+
   root "book_assistant#index"
-  
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

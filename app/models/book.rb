@@ -12,16 +12,16 @@ class Book < ApplicationRecord
   validates :author, presence: true
 
   # Scopes
-  scope :highly_rated, -> { where("books.rating >= ?", 4.0) }
-  scope :recent, -> { where("books.published_at >= ?", 1.year.ago) }
+  scope :highly_rated, -> { where(books: { rating: 4.0.. }) }
+  scope :recent, -> { where(books: { published_at: 1.year.ago.. }) }
   scope :trending, -> { where(is_trending: true).order(trending_score: :desc) }
 
   # Search scopes
-  scope :search_by_title, ->(query) {
+  scope :search_by_title, lambda { |query|
     where("LOWER(title) LIKE ?", "%#{query.downcase}%")
   }
 
-  scope :search_by_author, ->(query) {
+  scope :search_by_author, lambda { |query|
     where("LOWER(author) LIKE ?", "%#{query.downcase}%")
   }
 
@@ -29,7 +29,7 @@ class Book < ApplicationRecord
   serialize :genres, coder: JSON
 
   # Custom scope for genre search
-  scope :by_genre, ->(genre) {
+  scope :by_genre, lambda { |genre|
     where("genres LIKE ?", "%#{genre}%")
   }
 
@@ -45,9 +45,9 @@ class Book < ApplicationRecord
   def find_similar(limit: 5)
     # Find similar books based on similarity scores
     similar_ids = book_similarities
-      .order(similarity_score: :desc)
-      .limit(limit)
-      .pluck(:similar_book_id)
+                  .order(similarity_score: :desc)
+                  .limit(limit)
+                  .pluck(:similar_book_id)
 
     if similar_ids.empty?
       # Fallback: find by matching genres
@@ -80,16 +80,16 @@ class Book < ApplicationRecord
       language: language,
       availability_status: availability_status,
       similar_books_count: similar_books.count,
-      reviews: reviews.limit(3).map { |r|
+      reviews: reviews.limit(3).map do |r|
         { rating: r.rating, content: r.content }
-      }
+      end
     )
   end
 
   # Class methods for data seeding
   def self.create_sample_data!
-    require 'book_data_generator'
-    
+    require "book_data_generator"
+
     sample_books = BookDataGenerator.generate_books(1000)
 
     sample_books.each do |book_data|

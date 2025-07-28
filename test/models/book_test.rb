@@ -18,23 +18,26 @@ class BookTest < ActiveSupport::TestCase
   end
 
   test "should be valid with valid attributes" do
-    assert @book.valid?
+    assert_predicate @book, :valid?
   end
 
   test "should require title" do
     @book.title = nil
+
     assert_not @book.valid?
     assert_includes @book.errors[:title], "can't be blank"
   end
 
   test "should require author" do
     @book.author = nil
+
     assert_not @book.valid?
     assert_includes @book.errors[:author], "can't be blank"
   end
 
   test "should require isbn" do
     @book.isbn = nil
+
     assert_not @book.valid?
     assert_includes @book.errors[:isbn], "can't be blank"
   end
@@ -43,6 +46,7 @@ class BookTest < ActiveSupport::TestCase
     @book.save!
     duplicate_book = @book.dup
     duplicate_book.title = "Different Title"
+
     assert_not duplicate_book.valid?
     assert_includes duplicate_book.errors[:isbn], "has already been taken"
   end
@@ -50,47 +54,57 @@ class BookTest < ActiveSupport::TestCase
   test "should allow any rating value" do
     # Model doesn't validate rating range
     @book.rating = -1
-    assert @book.valid?
+
+    assert_predicate @book, :valid?
 
     @book.rating = 6
-    assert @book.valid?
+
+    assert_predicate @book, :valid?
 
     @book.rating = 3.5
-    assert @book.valid?
+
+    assert_predicate @book, :valid?
   end
 
   test "should allow any price value" do
     # Model doesn't validate price
     @book.price = -1
-    assert @book.valid?
+
+    assert_predicate @book, :valid?
 
     @book.price = 0
-    assert @book.valid?
+
+    assert_predicate @book, :valid?
   end
 
   test "should allow any page_count value" do
     # Model doesn't validate page_count
     @book.page_count = 0
-    assert @book.valid?
+
+    assert_predicate @book, :valid?
 
     @book.page_count = -1
-    assert @book.valid?
+
+    assert_predicate @book, :valid?
 
     @book.page_count = 100
-    assert @book.valid?
+
+    assert_predicate @book, :valid?
   end
 
   test "should serialize genres as JSON" do
     @book.save!
     reloaded_book = Book.find(@book.id)
+
     assert_equal ["Fiction", "Mystery"], reloaded_book.genres
   end
 
   test "search_by_title scope returns books matching title" do
     @book.save!
     Book.create!(title: "Another Book", author: "Author", isbn: "123-456")
-    
+
     results = Book.search_by_title("Test")
+
     assert_equal 1, results.count
     assert_equal @book, results.first
   end
@@ -98,8 +112,9 @@ class BookTest < ActiveSupport::TestCase
   test "search_by_author scope returns books matching author" do
     @book.save!
     Book.create!(title: "Another Book", author: "Different Author", isbn: "123-456")
-    
+
     results = Book.search_by_author("Test")
+
     assert_equal 1, results.count
     assert_equal @book, results.first
   end
@@ -109,8 +124,9 @@ class BookTest < ActiveSupport::TestCase
     @book.trending_score = 90
     @book.save!
     Book.create!(title: "Not Trending", author: "Author", isbn: "123-456", is_trending: false)
-    
+
     results = Book.trending
+
     assert_equal 1, results.count
     assert_equal @book, results.first
   end
@@ -118,8 +134,9 @@ class BookTest < ActiveSupport::TestCase
   test "by_genre scope returns books containing genre" do
     @book.save!
     Book.create!(title: "Another Book", author: "Author", isbn: "123-456", genres: ["Romance"])
-    
+
     results = Book.by_genre("Mystery")
+
     assert_equal 1, results.count
     assert_equal @book, results.first
   end
@@ -127,9 +144,10 @@ class BookTest < ActiveSupport::TestCase
   test "recent scope returns books published within last year" do
     @book.published_at = 6.months.ago
     @book.save!
-    old_book = Book.create!(title: "Old", author: "Author", isbn: "111", published_at: 2.years.ago)
-    
+    Book.create!(title: "Old", author: "Author", isbn: "111", published_at: 2.years.ago)
+
     results = Book.recent
+
     assert_equal 1, results.count
     assert_equal @book, results.first
   end
@@ -137,9 +155,10 @@ class BookTest < ActiveSupport::TestCase
   test "highly_rated scope returns books with rating >= 4.0" do
     @book.rating = 4.5
     @book.save!
-    low_rated = Book.create!(title: "Low", author: "Author", isbn: "333", rating: 3.5)
-    
+    Book.create!(title: "Low", author: "Author", isbn: "333", rating: 3.5)
+
     results = Book.highly_rated
+
     assert_equal 1, results.count
     assert_equal @book, results.first
   end
@@ -148,15 +167,15 @@ class BookTest < ActiveSupport::TestCase
     @book.save!
     Review.create!(book: @book, rating: 5, content: "Great!")
     Review.create!(book: @book, rating: 3, content: "OK")
-    
-    assert_equal 4.0, @book.calculate_rating
+
+    assert_in_delta(4.0, @book.calculate_rating)
   end
 
   test "review_count returns number of reviews" do
     @book.save!
     Review.create!(book: @book, rating: 5, content: "Great!")
     Review.create!(book: @book, rating: 3, content: "OK")
-    
+
     assert_equal 2, @book.review_count
   end
 
@@ -164,15 +183,16 @@ class BookTest < ActiveSupport::TestCase
     @book.save!
     similar = Book.create!(title: "Similar", author: "Author", isbn: "999", genres: ["Fiction"])
     BookSimilarity.create!(book: @book, similar_book: similar, similarity_score: 0.9)
-    
+
     results = @book.find_similar(limit: 5)
+
     assert_includes results, similar
   end
 
   test "to_api_response returns correct hash structure" do
     @book.save!
     response = @book.to_api_response
-    
+
     assert_equal @book.isbn, response[:isbn]
     assert_equal @book.title, response[:title]
     assert_equal @book.author, response[:author]
@@ -186,7 +206,7 @@ class BookTest < ActiveSupport::TestCase
   test "to_detailed_api_response includes all fields" do
     @book.save!
     response = @book.to_detailed_api_response
-    
+
     # Check all fields from to_api_response
     assert_includes response.keys, :isbn
     assert_includes response.keys, :title
@@ -196,7 +216,7 @@ class BookTest < ActiveSupport::TestCase
     assert_includes response.keys, :review_count
     assert_includes response.keys, :price
     assert_includes response.keys, :published_at
-    
+
     # Check additional detailed fields
     assert_includes response.keys, :description
     assert_includes response.keys, :publisher
@@ -209,15 +229,19 @@ class BookTest < ActiveSupport::TestCase
 
   test "should handle empty genres array" do
     @book.genres = []
-    assert @book.valid?
+
+    assert_predicate @book, :valid?
     @book.save!
-    assert_equal [], @book.reload.genres
+
+    assert_empty @book.reload.genres
   end
 
   test "should handle nil genres" do
     @book.genres = nil
-    assert @book.valid?
+
+    assert_predicate @book, :valid?
     @book.save!
+
     assert_nil @book.reload.genres
   end
 

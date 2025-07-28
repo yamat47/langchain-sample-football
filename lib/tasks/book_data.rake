@@ -13,7 +13,8 @@ namespace :book_data do
         Review.create!(
           book: book,
           rating: rand(3..5),
-          content: ["Great book!", "Highly recommended!", "Enjoyed reading this.", "Worth the read.", "Fantastic story!"].sample,
+          content: ["Great book!", "Highly recommended!", "Enjoyed reading this.", "Worth the read.",
+                    "Fantastic story!"].sample,
           reviewer_name: ["Alice", "Bob", "Charlie", "Diana", "Eve", "Frank"].sample
         )
       end

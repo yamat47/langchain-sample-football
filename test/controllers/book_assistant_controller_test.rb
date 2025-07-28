@@ -14,7 +14,7 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
       price: 1200,
       is_trending: true
     )
-    
+
     # Create some queries for recent display
     BookQuery.create!(
       query_text: "Fantasy books",
@@ -26,6 +26,7 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
 
   test "should get index" do
     get book_assistant_index_url
+
     assert_response :success
     assert_select "h1", text: /Book Recommendation Assistant/
     assert_select "#chat-container"
@@ -34,6 +35,7 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
 
   test "index page displays recent queries" do
     get book_assistant_index_url
+
     assert_response :success
     # Check if recent queries are displayed
     assert_match(/Recent Queries/, response.body)
@@ -48,17 +50,17 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
       message: "I found some great books for you!",
       tools_used: ["search_books"]
     }, ["Looking for mystery books"]
-    
+
     BookAssistantService.stub :new, mock_service do
       post query_book_assistant_index_url, params: { message: "Looking for mystery books" },
-                                            headers: { "Accept" => "text/vnd.turbo-stream.html" }
-      
+                                           headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
       assert_response :success
       assert_match(/turbo-stream/, response.body)
       assert_match(/Looking for mystery books/, response.body)
       assert_match(/I found some great books for you!/, response.body)
     end
-    
+
     mock_service.verify
   end
 
@@ -69,18 +71,19 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
       message: "Here are your recommendations",
       tools_used: ["search_books", "get_book_details"]
     }, ["Recommend me a book"]
-    
+
     BookAssistantService.stub :new, mock_service do
       post query_book_assistant_index_url, params: { message: "Recommend me a book" },
-                                            as: :json
-      
+                                           as: :json
+
       assert_response :success
-      json_response = JSON.parse(response.body)
+      json_response = response.parsed_body
+
       assert json_response["success"]
       assert_equal "Here are your recommendations", json_response["message"]
       assert_equal ["search_books", "get_book_details"], json_response["tools_used"]
     end
-    
+
     mock_service.verify
   end
 
@@ -91,11 +94,11 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
       message: "How can I help you find books today?",
       tools_used: []
     }, [""]
-    
+
     BookAssistantService.stub :new, mock_service do
       post query_book_assistant_index_url, params: { message: "" },
-                                            headers: { "Accept" => "text/vnd.turbo-stream.html" }
-      
+                                           headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
       assert_response :success
     end
   end
@@ -107,15 +110,15 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
       message: "An error occurred. Please try again.",
       tools_used: []
     }, ["Error query"]
-    
+
     BookAssistantService.stub :new, mock_service do
       post query_book_assistant_index_url, params: { message: "Error query" },
-                                            headers: { "Accept" => "text/vnd.turbo-stream.html" }
-      
+                                           headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
       assert_response :success
       assert_match(/An error occurred/, response.body)
     end
-    
+
     mock_service.verify
   end
 
@@ -126,17 +129,17 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
       message: "Found books",
       tools_used: ["search_books", "get_similar_books"]
     }, ["Find similar books"]
-    
+
     BookAssistantService.stub :new, mock_service do
       post query_book_assistant_index_url, params: { message: "Find similar books" },
-                                            headers: { "Accept" => "text/vnd.turbo-stream.html" }
-      
+                                           headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
       assert_response :success
       assert_match(/Tools used:/, response.body)
       assert_match(/search_books/, response.body)
       assert_match(/get_similar_books/, response.body)
     end
-    
+
     mock_service.verify
   end
 
@@ -147,21 +150,22 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
       message: "Found books",
       tools_used: []
     }, ["New query"]
-    
+
     BookAssistantService.stub :new, mock_service do
-      assert_difference "BookQuery.count", 0 do  # Service logs the query, not controller
+      assert_difference "BookQuery.count", 0 do # Service logs the query, not controller
         post query_book_assistant_index_url, params: { message: "New query" },
-                                              headers: { "Accept" => "text/vnd.turbo-stream.html" }
+                                             headers: { "Accept" => "text/vnd.turbo-stream.html" }
       end
-      
+
       assert_response :success
     end
   end
 
   test "index page includes quick links" do
     get book_assistant_index_url
+
     assert_response :success
-    
+
     assert_select "a[href=?]", admin_books_path, text: /Browse All Books/
     assert_select "a[href=?]", admin_dashboard_path, text: /Admin Dashboard/
     assert_select "a[href=?]", admin_book_queries_path, text: /View All Queries/
@@ -174,11 +178,11 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
       message: "Response",
       tools_used: []
     }, ["Test"]
-    
+
     BookAssistantService.stub :new, mock_service do
       post query_book_assistant_index_url, params: { message: "Test" },
-                                            headers: { "Accept" => "text/vnd.turbo-stream.html" }
-      
+                                           headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
       assert_response :success
       assert_match(/turbo-stream action="append" target="messages"/, response.body)
     end

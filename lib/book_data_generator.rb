@@ -2,15 +2,15 @@
 
 class BookDataGenerator
   GENRES = [
-    "Fantasy", "Science Fiction", "Mystery", "Thriller", "Romance", 
-    "Literary Fiction", "Historical Fiction", "Young Adult", "Horror", 
-    "Non-Fiction", "Biography", "Self-Help", "Business", "Philosophy", 
+    "Fantasy", "Science Fiction", "Mystery", "Thriller", "Romance",
+    "Literary Fiction", "Historical Fiction", "Young Adult", "Horror",
+    "Non-Fiction", "Biography", "Self-Help", "Business", "Philosophy",
     "Psychology", "History", "Science", "Technology", "Art", "Music",
     "Poetry", "Drama", "Humor", "Travel", "Cooking", "Health",
     "Sports", "Religion", "Politics", "Economics", "Education",
     "Children's", "Graphic Novel", "Crime", "Adventure", "Western",
     "Dystopian", "Magical Realism", "Contemporary", "Classic", "Memoir"
-  ]
+  ].freeze
 
   FIRST_NAMES = [
     "James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda",
@@ -19,7 +19,7 @@ class BookDataGenerator
     "Haruki", "Yuki", "Takashi", "Akiko", "Kenji", "Miho", "Hiroshi", "Yoko",
     "Gabriel", "Maria", "Carlos", "Ana", "Luis", "Sofia", "Antonio", "Elena",
     "Pierre", "Marie", "Jean", "Sophie", "Hans", "Emma", "Giovanni", "Lucia"
-  ]
+  ].freeze
 
   LAST_NAMES = [
     "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis",
@@ -28,7 +28,7 @@ class BookDataGenerator
     "Murakami", "Tanaka", "Yamamoto", "Suzuki", "Watanabe", "Ito", "Nakamura", "Sato",
     "García Márquez", "Borges", "Allende", "Cortázar", "Neruda", "Vargas Llosa",
     "Eco", "Calvino", "Ferrante", "Müller", "Larsson", "Knausgård", "Houellebecq"
-  ]
+  ].freeze
 
   PUBLISHERS = [
     "Penguin Random House", "HarperCollins", "Macmillan", "Simon & Schuster",
@@ -37,7 +37,7 @@ class BookDataGenerator
     "Bloomsbury", "Faber & Faber", "Vintage", "Knopf", "Farrar Straus Giroux",
     "Grove Atlantic", "Graywolf Press", "Coffee House Press", "Melville House",
     "Kodansha", "Shueisha", "Shinchosha", "Bungeishunju", "Iwanami Shoten"
-  ]
+  ].freeze
 
   TITLE_PATTERNS = [
     "The %s of %s", "A %s in %s", "%s and %s", "The %s's %s",
@@ -46,7 +46,7 @@ class BookDataGenerator
     "Letters from %s", "The %s Keeper", "%s's Journey", "Finding %s",
     "The Art of %s", "In Search of %s", "The %s Paradox", "%s Rising",
     "Chronicles of %s", "The %s Diaries", "Echoes of %s", "%s Unbound"
-  ]
+  ].freeze
 
   TITLE_WORDS = [
     "Shadow", "Light", "Dream", "Memory", "Time", "Love", "War", "Peace",
@@ -56,21 +56,21 @@ class BookDataGenerator
     "Wind", "Star", "Moon", "Sun", "Night", "Day", "Life", "Death",
     "Beginning", "End", "Path", "Bridge", "Door", "Window", "Mirror",
     "Garden", "Forest", "Mountain", "Ocean", "River", "Desert", "Island"
-  ]
+  ].freeze
 
-  LANGUAGES = ["en", "ja", "es", "fr", "de", "it", "pt", "ru", "zh", "ko"]
+  LANGUAGES = ["en", "ja", "es", "fr", "de", "it", "pt", "ru", "zh", "ko"].freeze
 
   def self.generate_books(count = 1000)
     # Use deterministic random seed for consistent data
-    rng = Random.new(12345)
-    
+    rng = Random.new(12_345)
+
     books = []
     used_isbns = Set.new
-    
+
     count.times do |i|
       isbn = generate_unique_isbn(i)
       used_isbns.add(isbn)
-      
+
       books << {
         isbn: isbn,
         title: generate_title(rng),
@@ -87,20 +87,18 @@ class BookDataGenerator
         trending_score: generate_trending_score(i)
       }
     end
-    
+
     books
   end
-
-  private
 
   def self.generate_unique_isbn(index)
     # Generate deterministic ISBNs based on the index
     prefix = index < 500 ? "978" : "979"
     group = index % 10
-    publisher = 10000 + (index / 10)
-    title = 10000 + index
+    publisher = 10_000 + (index / 10)
+    title = 10_000 + index
     check = index % 10
-    
+
     "#{prefix}-#{group}-#{publisher}-#{title}-#{check}"
   end
 
@@ -108,7 +106,7 @@ class BookDataGenerator
     pattern = TITLE_PATTERNS[rng.rand(TITLE_PATTERNS.size)]
     word_count = pattern.count("%s")
     words = word_count.times.map { TITLE_WORDS[rng.rand(TITLE_WORDS.size)] }
-    
+
     if pattern.count("%s") == 2
       pattern % words
     elsif pattern.count("%s") == 1
@@ -137,7 +135,7 @@ class BookDataGenerator
       "Discover the secrets of %s in this page-turning adventure.",
       "An essential read for anyone interested in %s and %s."
     ]
-    
+
     template = templates[rng.rand(templates.size)]
     topics = [
       "human nature", "love and loss", "family dynamics", "social justice",
@@ -145,7 +143,7 @@ class BookDataGenerator
       "political upheaval", "artistic expression", "scientific discovery", "philosophical inquiry",
       "historical events", "future possibilities", "moral dilemmas", "psychological complexity"
     ]
-    
+
     topic_count = template.count("%s")
     selected_topics = topic_count.times.map { topics[rng.rand(topics.size)] }
     template % selected_topics
@@ -161,10 +159,10 @@ class BookDataGenerator
   def self.generate_rating(rng = Random)
     # Generate realistic rating distribution
     # Most books cluster around 3.5-4.5
-    base = 3.5 + rng.rand * 1.0
+    base = 3.5 + (rng.rand * 1.0)
     variation = (rng.rand - 0.5)
     rating = base + variation
-    
+
     # Ensure within bounds and round to 2 decimal places
     [[rating, 5.0].min, 3.0].max.round(2)
   end
@@ -179,7 +177,7 @@ class BookDataGenerator
       (500..800),    # Mass market
       (3500..5000)   # Collectible/Art book
     ]
-    
+
     range = price_ranges[rng.rand(price_ranges.size)]
     price = range.min + rng.rand(range.max - range.min + 1)
     (price / 100).round * 100
@@ -195,12 +193,12 @@ class BookDataGenerator
       (2011..2020) => 0.30,
       (2021..2024) => 0.20
     }
-    
+
     range = weighted_choice(year_weights, rng)
     year = range.min + rng.rand(range.max - range.min + 1)
     month = 1 + rng.rand(12)
     day = 1 + rng.rand(28) # Avoid invalid dates
-    
+
     Date.new(year, month, day)
   end
 
@@ -232,13 +230,13 @@ class BookDataGenerator
   def self.weighted_choice(weights, rng = Random)
     total = weights.values.sum
     random_val = rng.rand * total
-    
+
     cumulative = 0
     weights.each do |range, weight|
       cumulative += weight
       return range if random_val <= cumulative
     end
-    
+
     weights.keys.last # Fallback
   end
 end

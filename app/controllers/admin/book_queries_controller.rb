@@ -11,8 +11,7 @@ module Admin
       @avg_response_time = BookQuery.where.not(response_time_ms: nil).average(:response_time_ms)&.round || 0
     end
 
-    def show
-    end
+    def show; end
 
     private
 

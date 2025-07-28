@@ -9,11 +9,11 @@ class BookAssistantController < ApplicationController
 
   def query
     @response = @assistant_service.process_query(params[:message])
-    
+
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: turbo_stream.append("messages", partial: "message",
-                                                  locals: { message: params[:message], response: @response })
+                                                             locals: { message: params[:message], response: @response })
       end
       format.html do
         redirect_to book_assistant_index_path

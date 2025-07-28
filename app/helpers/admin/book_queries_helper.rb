@@ -1,2 +1,4 @@
-module Admin::BookQueriesHelper
+module Admin
+  module BookQueriesHelper
+  end
 end

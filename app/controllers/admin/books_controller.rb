@@ -6,17 +6,17 @@ module Admin
 
     def index
       @books = Book.includes(:reviews)
-      
+
       # Handle search
       if params[:search].present?
         search_query = "%#{params[:search]}%"
         @books = @books.where("title LIKE ? OR author LIKE ?", search_query, search_query)
       end
-      
+
       # Pagination
       per_page = params[:per_page].presence&.to_i || 25
       @books = @books.order(:title).page(params[:page]).per(per_page)
-      
+
       @trending_books = Book.trending.limit(5)
       @recent_books = Book.recent.limit(5)
     end

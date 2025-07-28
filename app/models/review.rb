@@ -9,9 +9,9 @@ class Review < ApplicationRecord
                      numericality: { greater_than_or_equal_to: 1, less_than_or_equal_to: 5 }
   validates :content, presence: true
 
+  after_destroy :update_book_rating
   # Callbacks
   after_save :update_book_rating
-  after_destroy :update_book_rating
 
   # Scopes
   scope :recent, -> { order(created_at: :desc) }
