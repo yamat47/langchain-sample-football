@@ -9,15 +9,22 @@
       <div id="chat-container" style="background: #f5f5f5; border-radius: 8px; padding: 20px; min-height: 500px; display: flex; flex-direction: column;">
         <div id="messages" style="flex: 1; overflow-y: auto; margin-bottom: 20px;">
           <div style="text-align: center; padding: 40px; color: #999;" id="initial-greeting">
-            <% greeting = Rails.application.config.book_assistant[:initial_greetings].sample %>
-            <p style="font-size: 1.2em; margin-bottom: 20px;"><%= greeting %></p>
-            <p>Try asking me:</p>
-            <ul style="list-style: none; padding: 0; text-align: left; display: inline-block;">
-              <li style="margin: 10px 0;">• "What are the trending books?"</li>
-              <li style="margin: 10px 0;">• "Show me highly rated mystery novels"</li>
-              <li style="margin: 10px 0;">• "Find books by J.K. Rowling"</li>
-              <li style="margin: 10px 0;">• "What's similar to Harry Potter?"</li>
-            </ul>
+            <p style="font-size: 1.2em; margin-bottom: 20px;"><%= Rails.application.config.book_assistant[:initial_greeting] %></p>
+            <p style="font-weight: bold; margin-bottom: 15px;">Try asking me:</p>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 10px; max-width: 600px; margin: 0 auto; text-align: left;">
+              <% sample_queries = Rails.application.config.book_assistant[:sample_queries].sample(6) %>
+              <% sample_queries.each do |query| %>
+                <div style="background: white; padding: 10px 15px; border-radius: 6px; border: 1px solid #e0e0e0; cursor: pointer; transition: all 0.2s;"
+                     onclick="document.querySelector('[data-book-assistant-target=input]').value = '<%= query %>'; document.querySelector('[data-book-assistant-target=input]').focus();"
+                     onmouseover="this.style.backgroundColor='#f5f5f5'; this.style.borderColor='#1976d2';"
+                     onmouseout="this.style.backgroundColor='white'; this.style.borderColor='#e0e0e0';">
+                  <span style="color: #333; font-size: 0.9em;">"<%= query %>"</span>
+                </div>
+              <% end %>
+            </div>
+            <p style="margin-top: 20px; font-size: 0.85em; color: #999;">
+              <em>Click any suggestion above or type your own question!</em>
+            </p>
           </div>
         </div>
 
