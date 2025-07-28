@@ -10,10 +10,13 @@ class BookAssistantService
     
     begin
       # Add message and run the assistant
-      response = @assistant.add_message_and_run(
+      messages = @assistant.add_message_and_run(
         content: message,
         auto_tool_execution: true
       )
+      
+      # Get the last message which contains the response
+      response = messages.last
       
       # Calculate response time
       response_time_ms = ((Time.current - start_time) * 1000).round
