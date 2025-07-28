@@ -222,7 +222,7 @@ class BookTest < ActiveSupport::TestCase
   end
 
   test "should create sample data" do
-    assert_difference "Book.count", 5 do
+    assert_difference "Book.count", 1000 do
       Book.create_sample_data!
     end
   end
