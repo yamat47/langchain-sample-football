@@ -116,8 +116,7 @@
     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
       <%= link_to "Manage Books", admin_books_path, style: "background: #2196f3; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;" %>
       <%= link_to "View Query Logs", admin_book_queries_path, style: "background: #ff9800; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;" %>
-      <%= link_to "Generate Sample Data", "#", onclick: "if(confirm('This will run the book_data:generate rake task. Continue?')) { alert('Please run: rails book_data:generate'); } return false;", style: "background: #4caf50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;" %>
-      <%= link_to "Update Trending", "#", onclick: "if(confirm('This will run the book_data:update_trending rake task. Continue?')) { alert('Please run: rails book_data:update_trending'); } return false;", style: "background: #9c27b0; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;" %>
+      <%= link_to "Reset Seed Data", "#", onclick: "if(confirm('This will reset the database and load seed data. Continue?')) { alert('Please run: rails db:seed'); } return false;", style: "background: #4caf50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;" %>
     </div>
   </div>
 </div>

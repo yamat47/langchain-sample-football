@@ -245,9 +245,4 @@ class BookTest < ActiveSupport::TestCase
     assert_nil @book.reload.genres
   end
 
-  test "should create sample data" do
-    assert_difference "Book.count", 1000 do
-      Book.create_sample_data!
-    end
-  end
 end

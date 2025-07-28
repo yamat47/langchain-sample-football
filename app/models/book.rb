@@ -86,16 +86,4 @@ class Book < ApplicationRecord
     )
   end
 
-  # Class methods for data seeding
-  def self.create_sample_data!
-    require "book_data_generator"
-
-    sample_books = BookDataGenerator.generate_books(1000)
-
-    sample_books.each do |book_data|
-      Book.find_or_create_by!(isbn: book_data[:isbn]) do |book|
-        book.assign_attributes(book_data)
-      end
-    end
-  end
 end
