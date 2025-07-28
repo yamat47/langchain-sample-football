@@ -15,6 +15,9 @@ class BookAssistantController < ApplicationController
         render turbo_stream: turbo_stream.append("messages", partial: "message",
                                                   locals: { message: params[:message], response: @response })
       end
+      format.html do
+        redirect_to book_assistant_index_path
+      end
       format.json { render json: @response }
     end
   end

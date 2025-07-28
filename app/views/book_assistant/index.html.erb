@@ -21,8 +21,7 @@
         </div>
 
         <%= form_with url: query_book_assistant_index_path, 
-                      data: { turbo_frame: "_top", turbo_stream: true },
-                      local: false do |f| %>
+                      data: { turbo_method: "post", turbo_stream: true } do |f| %>
           <div style="display: flex; gap: 10px;">
             <%= f.text_field :message, 
                 placeholder: "Ask about books...",
