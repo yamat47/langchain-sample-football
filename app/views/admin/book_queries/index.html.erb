@@ -1,5 +1,9 @@
 <div style="padding: 20px; font-family: system-ui, -apple-system, sans-serif;">
-  <%= link_to "← Back to Books", admin_books_path, style: "color: #1976d2; text-decoration: none; margin-bottom: 20px; display: inline-block;" %>
+  <div style="margin-bottom: 20px;">
+    <%= link_to "← Back to Dashboard", admin_root_path, style: "color: #1976d2; text-decoration: none;" %>
+    |
+    <%= link_to "Books", admin_books_path, style: "color: #1976d2; text-decoration: none;" %>
+  </div>
   
   <h1>Book Query Logs</h1>
   <p style="color: #666; margin-bottom: 30px;">View all queries made to the book recommendation assistant</p>

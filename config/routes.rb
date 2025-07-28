@@ -6,6 +6,7 @@ Rails.application.routes.draw do
   end
   
   namespace :admin do
+    root "dashboard#index"
     get "dashboard", to: "dashboard#index"
     resources :books, only: [:index, :show] do
       resources :reviews, only: [:index]

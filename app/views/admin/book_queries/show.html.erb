@@ -1,5 +1,9 @@
 <div style="padding: 20px; font-family: system-ui, -apple-system, sans-serif;">
-  <%= link_to "← Back to Query Logs", admin_book_queries_path, style: "color: #1976d2; text-decoration: none; margin-bottom: 20px; display: inline-block;" %>
+  <div style="margin-bottom: 20px;">
+    <%= link_to "← Back to Dashboard", admin_root_path, style: "color: #1976d2; text-decoration: none;" %>
+    |
+    <%= link_to "Back to Query Logs", admin_book_queries_path, style: "color: #1976d2; text-decoration: none;" %>
+  </div>
   
   <h1>Query Details</h1>
   
