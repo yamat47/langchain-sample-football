@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
 # Langchain configuration
-Langchain.configure do |config|
-  config.logger = Rails.logger
-  config.timeout = 30 # seconds
-end
+# Langchainrb doesn't have a global configure method
+# Configuration is done per-instance when creating LLM clients

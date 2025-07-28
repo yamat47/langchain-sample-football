@@ -10,5 +10,63 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 0) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_28_073311) do
+  create_table "book_queries", force: :cascade do |t|
+    t.text "query_text", null: false
+    t.text "response_text"
+    t.boolean "success", default: false
+    t.string "error_message"
+    t.integer "response_time_ms"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_book_queries_on_created_at"
+  end
+
+  create_table "book_similarities", force: :cascade do |t|
+    t.integer "book_id", null: false
+    t.integer "similar_book_id", null: false
+    t.decimal "similarity_score", precision: 3, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["book_id", "similar_book_id"], name: "index_book_similarities_on_book_id_and_similar_book_id", unique: true
+    t.index ["book_id"], name: "index_book_similarities_on_book_id"
+    t.index ["similar_book_id"], name: "index_book_similarities_on_similar_book_id"
+  end
+
+  create_table "books", force: :cascade do |t|
+    t.string "isbn", null: false
+    t.string "title", null: false
+    t.string "author", null: false
+    t.string "publisher"
+    t.text "description"
+    t.decimal "price", precision: 10, scale: 2
+    t.text "genres"
+    t.decimal "rating", precision: 3, scale: 2, default: "0.0"
+    t.integer "page_count"
+    t.string "language", default: "en"
+    t.date "published_at"
+    t.string "availability_status", default: "available"
+    t.boolean "is_trending", default: false
+    t.integer "trending_score", default: 0
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["author"], name: "index_books_on_author"
+    t.index ["is_trending", "trending_score"], name: "index_books_on_is_trending_and_trending_score"
+    t.index ["isbn"], name: "index_books_on_isbn", unique: true
+    t.index ["title"], name: "index_books_on_title"
+  end
+
+  create_table "reviews", force: :cascade do |t|
+    t.integer "book_id", null: false
+    t.integer "rating", null: false
+    t.text "content"
+    t.string "reviewer_name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["book_id"], name: "index_reviews_on_book_id"
+  end
+
+  add_foreign_key "book_similarities", "books"
+  add_foreign_key "book_similarities", "books", column: "similar_book_id"
+  add_foreign_key "reviews", "books"
 end
