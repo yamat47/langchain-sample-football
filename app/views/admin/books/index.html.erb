@@ -30,7 +30,23 @@
     </div>
   </div>
 
-  <h2>All Books</h2>
+  <div style="margin-bottom: 20px;">
+    <h2 style="display: inline-block; margin-right: 20px;">All Books</h2>
+    
+    <!-- Search Form -->
+    <%= form_with url: admin_books_path, method: :get, local: true, style: "display: inline-block;" do |f| %>
+      <%= text_field_tag :search, params[:search], placeholder: "Search by title or author...", style: "padding: 8px; width: 300px; border: 1px solid #ddd; border-radius: 4px;" %>
+      <%= submit_tag "Search", style: "padding: 8px 16px; background: #2196f3; color: white; border: none; border-radius: 4px; cursor: pointer;" %>
+      <% if params[:search].present? %>
+        <%= link_to "Clear", admin_books_path, style: "margin-left: 10px; color: #666;" %>
+      <% end %>
+    <% end %>
+    
+    <!-- Book Count -->
+    <div class="book-count" style="margin-top: 10px; color: #666;">
+      Showing <%= @books.offset_value + 1 %>-<%= [@books.offset_value + @books.limit_value, @books.total_count].min %> of <%= @books.total_count %> books
+    </div>
+  </div>
   <table style="width: 100%; border-collapse: collapse; background: white;">
     <thead>
       <tr style="background: #f5f5f5;">
@@ -46,7 +62,7 @@
     </thead>
     <tbody>
       <% @books.each do |book| %>
-        <tr style="border-bottom: 1px solid #eee;">
+        <tr class="book-row" style="border-bottom: 1px solid #eee;">
           <td style="padding: 10px;">
             <%= link_to book.title, admin_book_path(book), style: "color: #333; text-decoration: none; font-weight: 500;" %>
           </td>
@@ -78,6 +94,22 @@
       <% end %>
     </tbody>
   </table>
+  
+  <!-- Pagination -->
+  <div style="margin-top: 20px; text-align: center;">
+    <nav class="pagination">
+      <%= paginate @books, params: { search: params[:search], per_page: params[:per_page] } %>
+    </nav>
+    
+    <!-- Per Page Selector -->
+    <div style="margin-top: 10px;">
+      Show per page:
+      <% [10, 25, 50, 100].each do |per_page| %>
+        <%= link_to per_page, admin_books_path(search: params[:search], per_page: per_page), 
+            style: "margin: 0 5px; #{'font-weight: bold;' if params[:per_page].to_i == per_page || (params[:per_page].blank? && per_page == 25)}" %>
+      <% end %>
+    </div>
+  </div>
 
   <div style="margin-top: 30px; padding: 20px; background: #f5f5f5; border-radius: 8px;">
     <h3>Quick Actions</h3>

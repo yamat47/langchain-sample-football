@@ -15,6 +15,9 @@ gem "bootsnap", require: false
 gem "langchainrb"
 gem "ruby-openai"
 
+# Pagination
+gem "kaminari"
+
 group :development, :test do
   gem "dotenv-rails"
 end
