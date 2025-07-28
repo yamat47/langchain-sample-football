@@ -12,8 +12,8 @@ class Book < ApplicationRecord
   validates :author, presence: true
 
   # Scopes
-  scope :highly_rated, -> { where("rating >= ?", 4.0) }
-  scope :recent, -> { where("published_at >= ?", 1.year.ago) }
+  scope :highly_rated, -> { where("books.rating >= ?", 4.0) }
+  scope :recent, -> { where("books.published_at >= ?", 1.year.ago) }
   scope :trending, -> { where(is_trending: true).order(trending_score: :desc) }
 
   # Search scopes

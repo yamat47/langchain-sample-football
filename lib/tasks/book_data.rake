@@ -57,7 +57,7 @@ namespace :book_data do
       )
     end
 
-    puts "Updated #{trending_books.count} trending books"
+    puts "Updated #{trending_books.size} trending books"
   end
 
   desc "Clear all book data"
