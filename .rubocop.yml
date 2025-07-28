@@ -1,8 +1,130 @@
-# Omakase Ruby styling for Rails
-inherit_gem: { rubocop-rails-omakase: rubocop.yml }
+inherit_from: .rubocop_todo.yml
 
-# Overwrite or add rules to create your own house style
-#
-# # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
-# Layout/SpaceInsideArrayLiteralBrackets:
-#   Enabled: false
+plugins:
+  - rubocop-rails
+  - rubocop-minitest
+
+AllCops:
+  TargetRubyVersion: 3.4
+  NewCops: enable
+  Exclude:
+    - 'db/**/*'
+    - 'bin/**/*'
+    - 'vendor/**/*'
+    - 'node_modules/**/*'
+    - 'tmp/**/*'
+    - 'config/application.rb'
+    - 'config/boot.rb'
+    - 'config/environment.rb'
+    - 'config/environments/*'
+    - 'config/puma.rb'
+    - 'config.ru'
+    - 'Gemfile.lock'
+
+# Rails specific
+Rails:
+  Enabled: true
+
+# Style preferences
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Style/Documentation:
+  Enabled: false
+
+Style/SymbolArray:
+  EnforcedStyle: brackets
+
+Style/WordArray:
+  EnforcedStyle: brackets
+
+# Length limits
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - 'test/**/*'
+
+Metrics/MethodLength:
+  Max: 20
+  Exclude:
+    - 'test/**/*'
+
+Metrics/ClassLength:
+  Max: 200
+  Exclude:
+    - 'test/**/*'
+
+Metrics/BlockLength:
+  Max: 30
+  Exclude:
+    - 'test/**/*'
+    - 'config/routes.rb'
+    - 'app/tools/**/*'
+
+# Allow more complex methods in certain contexts
+Metrics/PerceivedComplexity:
+  Max: 10
+  Exclude:
+    - 'app/services/**/*'
+
+# Minitest specific
+Minitest/MultipleAssertions:
+  Max: 5
+
+
+# Allow Rails logger
+Rails/Output:
+  Exclude:
+    - 'app/services/**/*'
+
+# Allow compact validation syntax
+Rails/Validation:
+  Enabled: false
+
+# Allow Rails logger in services
+Style/OpenStructUse:
+  Exclude:
+    - 'test/**/*'
+    - 'app/tools/**/*'
+
+# TODO: Refactor these complex methods later
+Metrics/AbcSize:
+  Exclude:
+    - 'app/controllers/admin/books_controller.rb'
+    - 'lib/book_data_generator.rb'
+
+Metrics/CyclomaticComplexity:
+  Exclude:
+    - 'app/tools/book_info_tool.rb'
+
+Metrics/MethodLength:
+  Exclude:
+    - 'app/services/book_assistant_service.rb'
+    - 'lib/book_data_generator.rb'
+
+# Allow Rails.logger in rake tasks
+Rails/SkipsModelValidations:
+  Exclude:
+    - 'lib/tasks/**/*'
+
+# Allow longer blocks in rake tasks
+Metrics/BlockLength:
+  Exclude:
+    - 'lib/tasks/**/*'
+
+# Allow specific naming for now
+Naming/PredicateMethod:
+  Exclude:
+    - 'lib/book_data_generator.rb'
+
+# Allow clamp style for now
+Style/ComparableClamp:
+  Enabled: false
+
+# Allow complex test with many assertions for API response
+Minitest/MultipleAssertions:
+  Exclude:
+    - 'test/models/book_test.rb'

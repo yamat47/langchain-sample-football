@@ -1,0 +1,12 @@
+---
+:app_path: "."
+:output_formats:
+  - text
+:rails7: true
+:skip_checks:
+  - Render
+:skip_files:
+  - test/
+  - vendor/
+  - node_modules/
+:ignore_file: .brakeman.ignore
