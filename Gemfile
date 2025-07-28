@@ -3,6 +3,7 @@
 source "https://rubygems.org"
 
 gem "rails"
+gem "propshaft"
 gem "sqlite3"
 gem "puma"
 gem "importmap-rails"

@@ -188,6 +188,10 @@ GEM
       prettyprint
     pragmatic_segmenter (0.3.24)
     prettyprint (0.2.0)
+    propshaft (1.2.1)
+      actionpack (>= 7.0.0)
+      activesupport (>= 7.0.0)
+      rack
     psych (5.2.6)
       date
       stringio
@@ -286,6 +290,7 @@ DEPENDENCIES
   jbuilder
   kaminari
   langchainrb
+  propshaft
   puma
   rails
   ruby-openai
