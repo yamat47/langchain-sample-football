@@ -17,7 +17,10 @@
 - 特定のテストファイル: `bundle exec rails test test/models/book_test.rb`
 
 ### リント・型チェックコマンド
-- まだ設定されていません（必要に応じて追加してください）
+- RuboCop（コードスタイルチェック）: `bundle exec rubocop`
+- RuboCop（自動修正）: `bundle exec rubocop -a`
+- Brakeman（セキュリティチェック）: `bundle exec brakeman`
+- すべてのチェックを実行: `bundle exec rubocop && bundle exec brakeman`
 
 ## プロジェクト固有の注意事項
 
