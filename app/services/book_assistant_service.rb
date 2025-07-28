@@ -50,9 +50,8 @@ class BookAssistantService
     @llm_client ||= Langchain::LLM::OpenAI.new(
       api_key: ENV["OPENAI_API_KEY"] || Rails.application.credentials.openai_api_key,
       default_options: {
-        model: "gpt-4",
-        temperature: 0.7,
-        max_tokens: 1000
+        model: "gpt-4o-mini",
+        temperature: 0.7
       }
     )
   end
@@ -111,13 +110,15 @@ class BookAssistantService
     
     response_time_ms = ((Time.current - start_time) * 1000).round
     
-    # Log the failed query
-    BookQuery.log_query(
-      message,
-      error.message,
-      false,
-      response_time_ms
-    )
+    # Log the failed query only if message is present
+    if message.present?
+      BookQuery.log_query(
+        message,
+        error.message,
+        false,
+        response_time_ms
+      )
+    end
     
     error_message = case error
                     when Langchain::LLM::ApiError
