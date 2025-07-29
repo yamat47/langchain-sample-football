@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   resources :book_assistant, only: [:index, :show, :new] do
     collection do
+      get :identify
       post :identify
       post :query
       post :new_chat
