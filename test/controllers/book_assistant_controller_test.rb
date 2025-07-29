@@ -25,7 +25,7 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get index" do
-    get book_assistant_index_url
+    get book_assistant_index_url, params: { legacy_chat: "true" }
 
     assert_response :success
     assert_select "h1", text: /Book Recommendation Assistant/
@@ -34,7 +34,7 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "index page displays recent queries" do
-    get book_assistant_index_url
+    get book_assistant_index_url, params: { legacy_chat: "true" }
 
     assert_response :success
     # Check if recent queries are displayed
@@ -162,7 +162,7 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "index page includes quick links" do
-    get book_assistant_index_url
+    get book_assistant_index_url, params: { legacy_chat: "true" }
 
     assert_response :success
 
@@ -189,7 +189,7 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should initialize session on first visit" do
-    get book_assistant_index_url
+    get book_assistant_index_url, params: { legacy_chat: "true" }
 
     assert_response :success
     assert_not_nil session[:chat_session_id]
@@ -197,16 +197,19 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
 
   test "should maintain session across requests" do
     # First request
-    get book_assistant_index_url
+    get book_assistant_index_url, params: { legacy_chat: "true" }
     initial_session_id = session[:chat_session_id]
 
     # Second request
-    get book_assistant_index_url
+    get book_assistant_index_url, params: { legacy_chat: "true" }
 
     assert_equal initial_session_id, session[:chat_session_id]
   end
 
   test "should store conversation history in cache" do
+    # First, ensure we have a session
+    get book_assistant_index_url, params: { legacy_chat: "true" }
+
     mock_service = Minitest::Mock.new
     mock_service.expect :process_query, {
       success: true,
@@ -223,9 +226,10 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
                                            headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
       assert_response :success
-      
+
       # Verify messages were stored in cache
       cached_messages = ChatSessionService.get_messages(session[:chat_session_id])
+
       assert_equal 2, cached_messages.length
       assert_equal "user", cached_messages[0][:role]
       assert_equal "Find fantasy books", cached_messages[0][:content]
@@ -233,7 +237,10 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should pass existing messages to service" do
-    # First, set up a conversation with initial messages
+    # First, ensure we have a session
+    get book_assistant_index_url, params: { legacy_chat: "true" }
+
+    # Then set up a conversation with initial messages
     mock_service1 = Minitest::Mock.new
     mock_service1.expect :process_query, {
       success: true,
@@ -285,9 +292,9 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
 
   test "new_chat action clears session" do
     # Get initial session ID
-    get book_assistant_index_url
+    get book_assistant_index_url, params: { legacy_chat: "true" }
     old_session_id = session[:chat_session_id]
-    
+
     # Add some messages to cache
     ChatSessionService.add_message(old_session_id, "user", "Old message")
     ChatSessionService.add_message(old_session_id, "assistant", "Old response")
@@ -297,13 +304,13 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
          headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
     assert_response :success
-    
+
     # Should have new session ID
     assert_not_equal old_session_id, session[:chat_session_id]
-    
+
     # Old session should be cleared
     assert_empty ChatSessionService.get_messages(old_session_id)
-    
+
     # New session should be empty
     assert_empty ChatSessionService.get_messages(session[:chat_session_id])
   end
