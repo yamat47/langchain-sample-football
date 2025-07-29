@@ -1,8 +1,13 @@
 Rails.application.routes.draw do
-  resources :book_assistant, only: [:index] do
+  resources :book_assistant, only: [:index, :show, :new] do
     collection do
+      post :identify
       post :query
       post :new_chat
+      delete :logout
+    end
+    member do
+      post :query
     end
   end
 
