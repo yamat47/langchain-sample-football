@@ -1,0 +1,33 @@
+<div style="max-width: 600px; margin: 50px auto; text-align: center;">
+  <h1>Welcome to Book Assistant</h1>
+  <p style="margin: 30px 0; color: #666; font-size: 18px;">
+    Enter your identifier to access your chat history
+  </p>
+  
+  <div style="background: #f5f5f5; padding: 40px; border-radius: 8px;">
+    <%= form_with url: identify_book_assistant_index_path, local: true do |f| %>
+      <div style="margin-bottom: 20px;">
+        <%= f.text_field :identifier, 
+            placeholder: "Enter your identifier (e.g., yamat47)",
+            pattern: "[a-zA-Z0-9]+",
+            required: true,
+            style: "width: 100%; padding: 15px; font-size: 18px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box;" %>
+      </div>
+      
+      <div>
+        <%= f.submit "Continue", 
+            style: "background: #1976d2; color: white; padding: 15px 40px; border: none; border-radius: 4px; cursor: pointer; font-size: 18px; font-weight: bold;" %>
+      </div>
+    <% end %>
+  </div>
+  
+  <div style="margin-top: 40px; color: #999;">
+    <p><strong>Note:</strong> Use only letters and numbers</p>
+    <p>Your identifier will be created automatically if it doesn't exist</p>
+  </div>
+  
+  <div style="margin-top: 20px;">
+    <%= link_to "Continue without signing in", book_assistant_index_path(chat_mode: true),
+                style: "color: #1976d2; text-decoration: underline;" %>
+  </div>
+</div>

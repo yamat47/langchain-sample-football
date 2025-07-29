@@ -24,6 +24,11 @@
   </head>
 
   <body>
+    <% flash.each do |type, message| %>
+      <div class="flash-<%= type %>" style="background: <%= type == 'error' ? '#f44336' : '#4caf50' %>; color: white; padding: 15px; text-align: center;">
+        <%= message %>
+      </div>
+    <% end %>
     <%= yield %>
   </body>
 </html>

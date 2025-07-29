@@ -1,0 +1,63 @@
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px; font-family: system-ui, -apple-system, sans-serif;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px;">
+    <div>
+      <h1 style="color: #1976d2; margin-bottom: 10px;">📚 Book Assistant</h1>
+      <p style="color: #666;">Welcome back, <%= @current_user.identifier %>!</p>
+    </div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+      <%= link_to "New Chat", new_book_assistant_path, 
+          style: "background: #1976d2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;" %>
+      <%= button_to "Logout", logout_book_assistant_index_path, 
+          method: :delete,
+          style: "background: #757575; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;" %>
+    </div>
+  </div>
+
+  <div>
+    <h2>Your Chat History</h2>
+    
+    <% if @chat_sessions.any? %>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
+        <% @chat_sessions.each do |session| %>
+          <%= link_to book_assistant_path(session), 
+              style: "text-decoration: none; color: inherit;" do %>
+            <div class="session-card" style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; cursor: pointer; transition: all 0.2s; hover: box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+              <h3 style="margin: 0 0 10px 0; color: #333;">Session #<%= session.session_number %></h3>
+              <p class="datetime" style="color: #666; margin: 0 0 15px 0; font-size: 14px;">
+                <%= session.created_at.strftime("%B %d, %Y at %I:%M %p") %>
+              </p>
+              
+              <% if session.chat_messages.any? %>
+                <p class="preview" style="color: #555; margin: 0 0 15px 0; font-style: italic;">
+                  "<%= truncate(session.chat_messages.last.content, length: 100) %>"
+                </p>
+              <% else %>
+                <p class="preview" style="color: #999; margin: 0 0 15px 0; font-style: italic;">
+                  No messages yet
+                </p>
+              <% end %>
+              
+              <div class="metadata" style="display: flex; justify-content: space-between; font-size: 13px; color: #999;">
+                <span><%= session.messages_count %> messages</span>
+                <span>Last active <%= time_ago_in_words(session.last_activity_at) %> ago</span>
+              </div>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% else %>
+      <div style="text-align: center; padding: 60px; background: #f5f5f5; border-radius: 8px;">
+        <p style="color: #666; font-size: 18px; margin-bottom: 20px;">No chat sessions yet</p>
+        <%= link_to "Start Your First Chat", new_book_assistant_path, 
+            style: "background: #1976d2; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;" %>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<style>
+  .session-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+  }
+</style>

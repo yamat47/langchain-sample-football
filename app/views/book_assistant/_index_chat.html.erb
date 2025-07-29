@@ -1,0 +1,93 @@
+
+<div style="max-width: 1200px; margin: 0 auto; padding: 20px; font-family: system-ui, -apple-system, sans-serif;">
+  <div style="text-align: center; margin-bottom: 40px;">
+    <h1 style="color: #1976d2; margin-bottom: 10px;">📚 Book Recommendation Assistant</h1>
+    <p style="color: #666;">Ask me about books, and I'll help you find your next great read!</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px;">
+    <!-- Chat Section -->
+    <div>
+      <div id="chat-container" style="background: #f5f5f5; border-radius: 8px; padding: 20px; min-height: 400px; max-height: 600px; overflow-y: auto;">
+        <div id="messages" style="display: flex; flex-direction: column; gap: 15px;">
+          <!-- Messages will be appended here -->
+        </div>
+      </div>
+
+      <div style="margin-top: 20px; width: 100%;">
+        <%= form_with url: query_book_assistant_index_path, 
+                      method: :post,
+                      data: { turbo_stream: true },
+                      style: "display: flex; gap: 10px; width: 100%;" do |f| %>
+          <%= f.text_field :message, 
+              placeholder: "Ask about books, recommendations, authors...",
+              style: "flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 16px;",
+              autocomplete: "off" %>
+          <%= f.submit "Send", 
+              style: "background: #1976d2; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; flex-shrink: 0;" %>
+        <% end %>
+      </div>
+
+      <div style="margin-top: 10px; display: flex; justify-content: space-between; align-items: center;">
+        <p style="color: #999; font-size: 14px;">
+          💡 Try asking: "Recommend a mystery book" or "Tell me about Harry Potter"
+        </p>
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <%= button_to "New Chat", new_chat_book_assistant_index_path,
+                        method: :post,
+                        data: { turbo_stream: true },
+                        style: "background: #757575; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;" %>
+          <%= link_to "Sign In", book_assistant_index_path(show_identify: true),
+                      style: "background: #1976d2; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px; font-size: 14px; display: inline-block;" %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side Panel -->
+    <div>
+      <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+        <h3 style="color: #333; margin-bottom: 15px;">📊 Recent Queries</h3>
+        <% recent_queries = BookQuery.recent.limit(5) %>
+        <% if recent_queries.any? %>
+          <ul style="list-style: none; padding: 0; margin: 0;">
+            <% recent_queries.each do |query| %>
+              <li style="padding: 10px 0; border-bottom: 1px solid #eee;">
+                <div style="font-weight: 500; color: #555; margin-bottom: 5px;">
+                  <%= truncate(query.query_text, length: 50) %>
+                </div>
+                <div style="font-size: 12px; color: #999;">
+                  <%= time_ago_in_words(query.created_at) %> ago
+                  <% if query.success? %>
+                    <span style="color: #4caf50;">✓</span>
+                  <% else %>
+                    <span style="color: #f44336;">✗</span>
+                  <% end %>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p style="color: #999; text-align: center;">No queries yet</p>
+        <% end %>
+      </div>
+
+      <div style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px;">
+        <h3 style="color: #333; margin-bottom: 15px;">🔗 Quick Links</h3>
+        <ul style="list-style: none; padding: 0; margin: 0;">
+          <li style="margin-bottom: 10px;">
+            <%= link_to "Browse All Books", admin_books_path, 
+                style: "color: #1976d2; text-decoration: none;" %>
+          </li>
+          <li style="margin-bottom: 10px;">
+            <%= link_to "Admin Dashboard", admin_dashboard_path, 
+                style: "color: #1976d2; text-decoration: none;" %>
+          </li>
+          <li>
+            <%= link_to "View All Queries", admin_book_queries_path, 
+                style: "color: #1976d2; text-decoration: none;" %>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
