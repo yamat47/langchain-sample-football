@@ -173,4 +173,140 @@ class BookAssistantServiceTest < ActiveSupport::TestCase
   test "chat method delegates to process_query" do
     skip "Requires valid OpenAI API key for integration test"
   end
+
+  test "should accept session_id and messages in constructor" do
+    session_id = "test-session-123"
+    messages = [
+      { role: "user", content: "Hello" },
+      { role: "assistant", content: "Hi there!" }
+    ]
+
+    service = BookAssistantService.new(session_id: session_id, messages: messages)
+
+    assert_equal session_id, service.instance_variable_get(:@session_id)
+    assert_equal messages, service.instance_variable_get(:@messages)
+  end
+
+  test "should initialize with empty messages if not provided" do
+    service = BookAssistantService.new
+
+    assert_nil service.instance_variable_get(:@session_id)
+    assert_empty service.instance_variable_get(:@messages)
+  end
+
+  test "should restore conversation history when building assistant" do
+    messages = [
+      { role: "user", content: "What books do you recommend?" },
+      { role: "assistant", content: "I recommend Harry Potter series." }
+    ]
+
+    service = BookAssistantService.new(messages: messages)
+
+    # Mock assistant to verify add_message is called
+    mock_assistant = Minitest::Mock.new
+    # Define expectations for add_message with keyword arguments
+    def mock_assistant.add_message(role:, content:)
+      # Track calls for verification
+      @calls ||= []
+      @calls << { role: role, content: content }
+    end
+
+    def mock_assistant.verify_calls
+      expected = [
+        { role: "user", content: "What books do you recommend?" },
+        { role: "assistant", content: "I recommend Harry Potter series." }
+      ]
+      @calls == expected
+    end
+
+    # Replace build_assistant to return our mock
+    service.stub :build_assistant, mock_assistant do
+      service.send(:build_assistant_with_history)
+    end
+
+    assert mock_assistant.verify_calls
+  end
+
+  test "process_query should update messages array with user and assistant messages" do
+    service = BookAssistantService.new
+    OpenStruct.new(content: "Here are some book recommendations", tool_calls: nil)
+
+    mock_assistant = Minitest::Mock.new
+    # Define add_message_and_run with keyword arguments
+    def mock_assistant.add_message_and_run(content:, auto_tool_execution: true)
+      [OpenStruct.new(content: "Here are some book recommendations", tool_calls: nil)]
+    end
+
+    service.instance_variable_set(:@assistant, mock_assistant)
+
+    # Verify initial state
+    assert_empty service.instance_variable_get(:@messages)
+
+    result = service.process_query("Recommend fantasy books")
+
+    # Check result structure
+    assert_not_nil result
+    assert_not_equal result[:success], false, "Query should succeed: #{result[:error]}"
+
+    messages = result[:messages]
+
+    assert_not_nil messages, "Messages should not be nil"
+    assert_equal 2, messages.length, "Should have user and assistant messages"
+    assert_equal({ role: "user", content: "Recommend fantasy books" }, messages[0])
+    assert_equal({ role: "assistant", content: "Here are some book recommendations" }, messages[1])
+  end
+
+  test "process_query should maintain conversation history across multiple calls" do
+    service = BookAssistantService.new
+
+    # Mock assistant that remembers calls
+    mock_assistant = Minitest::Mock.new
+
+    def mock_assistant.add_message_and_run(content:, auto_tool_execution: true)
+      # Return different responses based on call count
+      @call_count ||= 0
+      response = @responses ||= ["I can help with that", "Here are fantasy books"]
+      result = [OpenStruct.new(content: response[@call_count], tool_calls: nil)]
+      @call_count += 1
+      result
+    end
+
+    service.instance_variable_set(:@assistant, mock_assistant)
+
+    # First query
+    result1 = service.process_query("Hello")
+
+    assert_equal 2, result1[:messages].length
+
+    # Update service messages for next call
+    service.instance_variable_set(:@messages, result1[:messages])
+
+    # Second query
+    result2 = service.process_query("Show me fantasy books")
+
+    messages = result2[:messages]
+
+    assert_equal 4, messages.length
+    assert_equal "Hello", messages[0][:content]
+    assert_equal "I can help with that", messages[1][:content]
+    assert_equal "Show me fantasy books", messages[2][:content]
+    assert_equal "Here are fantasy books", messages[3][:content]
+  end
+
+  test "should limit message history to prevent token overflow" do
+    # Create 25 messages (over the 20 limit)
+    messages = []
+    25.times do |i|
+      messages << { role: "user", content: "Question #{i}" }
+      messages << { role: "assistant", content: "Answer #{i}" }
+    end
+
+    service = BookAssistantService.new(messages: messages)
+    service.send(:limit_message_history!)
+
+    # Should keep only the last 20 messages
+    assert_equal 20, service.instance_variable_get(:@messages).length
+    # First message should be from question 15 (30 messages removed)
+    assert_equal "Question 15", service.instance_variable_get(:@messages).first[:content]
+  end
 end

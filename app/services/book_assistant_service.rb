@@ -1,14 +1,22 @@
 # frozen_string_literal: true
 
 class BookAssistantService
-  def initialize
-    @assistant = build_assistant
+  MESSAGE_HISTORY_LIMIT = 20
+
+  def initialize(session_id: nil, messages: [])
+    @session_id = session_id
+    @messages = messages || []
+    @assistant = build_assistant_with_history
   end
 
   def process_query(message)
     start_time = Time.current
 
     begin
+      # Add user message to conversation history
+      @messages << { role: "user", content: message }
+      limit_message_history!
+
       # Add message and run the assistant
       messages = @assistant.add_message_and_run(
         content: message,
@@ -17,6 +25,9 @@ class BookAssistantService
 
       # Get the last message which contains the response
       response = messages.last
+
+      # Add assistant response to conversation history
+      @messages << { role: "assistant", content: response.content }
 
       # Calculate response time
       response_time_ms = ((Time.current - start_time) * 1000).round
@@ -29,7 +40,8 @@ class BookAssistantService
         response_time_ms
       )
 
-      format_response(response)
+      # Return response with updated messages
+      format_response(response).merge(messages: @messages)
     rescue StandardError => e
       handle_error(e, message, start_time)
     end
@@ -40,6 +52,28 @@ class BookAssistantService
   end
 
   private
+
+  def build_assistant_with_history
+    assistant = build_assistant
+
+    # Restore conversation history to the assistant
+    @messages.each do |msg|
+      # Ensure role is a string and valid
+      role = msg[:role].to_s
+      next unless ["system", "assistant", "user", "tool"].include?(role)
+
+      assistant.add_message(role: role, content: msg[:content])
+    end
+
+    assistant
+  end
+
+  def limit_message_history!
+    # Keep only the last MESSAGE_HISTORY_LIMIT messages
+    return unless @messages.length > MESSAGE_HISTORY_LIMIT
+
+    @messages = @messages.last(MESSAGE_HISTORY_LIMIT)
+  end
 
   def build_assistant
     Langchain::Assistant.new(
@@ -134,7 +168,8 @@ class BookAssistantService
       message: error_message,
       success: false,
       error: error.message,
-      timestamp: Time.current
+      timestamp: Time.current,
+      messages: @messages
     }
   end
 
