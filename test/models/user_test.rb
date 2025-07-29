@@ -89,4 +89,40 @@ class UserTest < ActiveSupport::TestCase
     # Should not strip whitespace, just mark as invalid
     assert_not user.valid?
   end
+
+  # Anonymous user tests
+  test "should create anonymous user" do
+    anonymous = User.anonymous_user
+
+    assert_predicate anonymous, :persisted?
+    assert_equal "anonymous", anonymous.identifier
+    assert_predicate anonymous, :anonymous?
+  end
+
+  test "should return existing anonymous user if already exists" do
+    first_anonymous = User.anonymous_user
+    second_anonymous = User.anonymous_user
+
+    assert_equal first_anonymous.id, second_anonymous.id
+  end
+
+  test "anonymous scope should return only anonymous users" do
+    User.anonymous_user # Ensure anonymous user exists
+    User.create!(identifier: "regularuser")
+
+    anonymous_users = User.anonymous
+
+    assert_equal 1, anonymous_users.count
+    assert_predicate anonymous_users.first, :anonymous?
+  end
+
+  test "registered scope should return only non-anonymous users" do
+    User.anonymous_user # Ensure anonymous user exists
+    regular = User.create!(identifier: "regularuser")
+
+    registered_users = User.registered
+
+    assert_includes registered_users, regular
+    assert_not registered_users.any?(&:anonymous?)
+  end
 end
