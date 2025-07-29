@@ -5,14 +5,14 @@ description: Create technical design for enhancement or bug fix (Stage 2 of Spec
 
 ## Context
 
-- Requirements document: @.tmp/requirements.md
+- Requirements document: @docs/kiro_specs/XXX_theme_name/001_requirements.md
 - Existing Rails codebase with established patterns
 
 ## Your task
 
 ### 1. Verify prerequisites
 
-- Check that `.tmp/requirements.md` exists
+- Check that requirements document exists in the current KIRO spec directory
 - If not, inform user to run `/requirements` first
 
 ### 2. Analyze requirements and existing code
@@ -23,7 +23,7 @@ description: Create technical design for enhancement or bug fix (Stage 2 of Spec
 
 ### 3. Create Design Document
 
-Create `.tmp/design.md` with structure based on task type:
+Create `docs/kiro_specs/XXX_theme_name/002_design.md` with structure based on task type:
 
 **For Bug Fixes:**
 ```markdown

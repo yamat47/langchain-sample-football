@@ -5,15 +5,15 @@ description: Create implementation tasks for enhancement or bug fix (Stage 3 of 
 
 ## Context
 
-- Requirements: @.tmp/requirements.md
-- Design document: @.tmp/design.md
+- Requirements: @docs/kiro_specs/XXX_theme_name/001_requirements.md
+- Design document: @docs/kiro_specs/XXX_theme_name/002_design.md
 - Task scope: Bug fixes and feature enhancements
 
 ## Your task
 
 ### 1. Verify prerequisites
 
-- Check that both `.tmp/requirements.md` and `.tmp/design.md` exist
+- Check that both requirements and design documents exist in the current KIRO spec directory
 - If not, inform user to complete previous stages first
 
 ### 2. Analyze design document
@@ -24,7 +24,7 @@ description: Create implementation tasks for enhancement or bug fix (Stage 3 of 
 
 ### 3. Create Task List Document
 
-Create `.tmp/tasks.md` with structure based on task complexity:
+Create `docs/kiro_specs/XXX_theme_name/003_tasks.md` with structure based on task complexity:
 
 **For Simple Bug Fixes (< 4 hours):**
 ```markdown

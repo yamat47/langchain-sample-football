@@ -12,7 +12,8 @@ description: Analyze requirements for enhancement or bug fix (Stage 1 of Spec-Dr
 
 ### 1. Create directory
 
-- Create `.tmp` directory if it doesn't exist
+- Find next available number in `docs/kiro_specs/`
+- Create themed directory: `docs/kiro_specs/XXX_theme_name/`
 
 ### 2. Understand existing implementation
 
@@ -40,7 +41,7 @@ Based on task type, extract:
 
 ### 4. Create Requirements Document
 
-Create `.tmp/requirements.md` with structure adapted to task type:
+Create `docs/kiro_specs/XXX_theme_name/001_requirements.md` with structure adapted to task type:
 
 **For Bug Fixes:**
 ```markdown

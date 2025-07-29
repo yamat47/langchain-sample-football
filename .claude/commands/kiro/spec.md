@@ -19,7 +19,8 @@ Execute the Specification-Driven Development workflow adapted for existing featu
 
 ### 2. Setup
 
-- Create `.tmp` directory if it doesn't exist
+- Determine next directory number in `docs/kiro_specs/`
+- Create new themed directory: `docs/kiro_specs/XXX_theme_name/`
 - Analyze existing codebase to understand current implementation
 
 ### 3. Workflow Selection
@@ -42,11 +43,15 @@ Execute the Specification-Driven Development workflow adapted for existing featu
 ### 4. Stage Execution
 
 Based on task type, execute appropriate stages:
-- Stage 1: Requirements analysis (focused on changes)
-- Stage 2: Design (emphasis on integration)
-- Stage 3: Task breakdown (implementation steps)
+- Stage 1: Requirements analysis → `001_requirements.md`
+- Stage 2: Design → `002_design.md`
+- Stage 3: Task breakdown → `003_tasks.md`
+- Stage 4: Summary → `004_summary.md`
 
 **Get user approval at key decision points**
+
+All documents should be created in the themed directory:
+`docs/kiro_specs/XXX_theme_name/`
 
 ### 5. Implementation Readiness
 
