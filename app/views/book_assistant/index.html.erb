@@ -1,9 +1,6 @@
 <% if @current_user %>
   <%= render 'index_authenticated' %>
-<% elsif @legacy_mode || params[:chat_mode] %>
-  <!-- For old tests that expect chat interface directly -->
-  <%= render 'index_chat' %>
 <% else %>
-  <!-- For new persistence tests that expect identify form -->
-  <%= render 'identify' %>
+  <!-- Anonymous user - show chat interface directly -->
+  <%= render 'index_chat' %>
 <% end %>
