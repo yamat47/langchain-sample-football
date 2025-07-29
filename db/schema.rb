@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_29_034032) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_29_044020) do
   create_table "book_queries", force: :cascade do |t|
     t.text "query_text", null: false
     t.text "response_text"
@@ -95,6 +95,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_29_034032) do
     t.string "identifier", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "anonymous", default: false, null: false
+    t.index ["anonymous"], name: "index_users_on_anonymous"
     t.index ["created_at"], name: "index_users_on_created_at"
     t.index ["identifier"], name: "index_users_on_identifier", unique: true
   end
