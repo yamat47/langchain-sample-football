@@ -244,5 +244,4 @@ class BookTest < ActiveSupport::TestCase
 
     assert_nil @book.reload.genres
   end
-
 end
