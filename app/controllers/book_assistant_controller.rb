@@ -9,22 +9,34 @@ class BookAssistantController < ApplicationController
     if @current_user
       @chat_sessions = @current_user.chat_sessions.recent
     else
-      # For backward compatibility with old tests that expect chat interface
-      # Use legacy_chat param to indicate old behavior
-      @legacy_mode = params[:legacy_chat] == "true"
-      session[:chat_session_id] ||= SecureRandom.uuid if @legacy_mode
+      # Initialize anonymous session
+      anonymous_user = User.anonymous_user
+      persistence_service = ChatPersistenceService.new(anonymous_user)
+
+      if session[:anonymous_chat_session_id]
+        @chat_session = anonymous_user.chat_sessions.find_by(id: session[:anonymous_chat_session_id])
+      end
+
+      @chat_session ||= persistence_service.create_session
+      session[:anonymous_chat_session_id] = @chat_session.id
     end
   end
 
   def identify
-    @user = UserService.find_or_create_by_identifier(params[:identifier])
-
-    if @user&.persisted?
-      session[:user_id] = @user.id
+    if request.get?
+      # Show the identify form
+      render 'identify'
     else
-      flash[:error] = "Invalid identifier. Please use only letters and numbers."
+      # Handle POST request
+      @user = UserService.find_or_create_by_identifier(params[:identifier])
+
+      if @user&.persisted?
+        session[:user_id] = @user.id
+      else
+        flash[:error] = "Invalid identifier. Please use only letters and numbers."
+      end
+      redirect_to book_assistant_index_path
     end
-    redirect_to book_assistant_index_path
   end
 
   def show
@@ -43,37 +55,47 @@ class BookAssistantController < ApplicationController
       @chat_session = @current_user.chat_sessions.find(params[:id])
       process_session_query
     elsif @current_user
-      # Collection query - handle old cache-based system for backward compatibility
+      # Collection query - authenticated user
       @chat_session = @current_user.chat_sessions.recent.first || @persistence_service.create_session
       process_session_query
     else
-      # Old cache-based behavior for tests
-      process_cache_query
+      # Anonymous user
+      anonymous_user = User.anonymous_user
+      @persistence_service = ChatPersistenceService.new(anonymous_user)
+      @chat_session = anonymous_user.chat_sessions.find_by(id: session[:anonymous_chat_session_id])
+      @chat_session ||= @persistence_service.create_session
+      session[:anonymous_chat_session_id] = @chat_session.id
+      process_session_query
     end
   end
 
   def new_chat
-    # This action is for cache-based system
-    # Clear the current session and create new
-    old_session_id = session[:chat_session_id]
-    new_session_id = SecureRandom.uuid
-    session[:chat_session_id] = new_session_id
+    if @current_user
+      # Authenticated user - create new session
+      @chat_session = @persistence_service.create_session
+      redirect_to book_assistant_path(@chat_session)
+    else
+      # Anonymous user - create new anonymous session
+      anonymous_user = User.anonymous_user
+      persistence_service = ChatPersistenceService.new(anonymous_user)
+      @chat_session = persistence_service.create_session
+      session[:anonymous_chat_session_id] = @chat_session.id
 
-    # Clear old messages if any
-    ChatSessionService.clear_session(old_session_id) if old_session_id
 
-    respond_to do |format|
-      format.turbo_stream do
-        render turbo_stream: turbo_stream.update("messages", "")
-      end
-      format.html do
-        redirect_to book_assistant_index_path
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.update("messages", "")
+        end
+        format.html do
+          redirect_to book_assistant_index_path
+        end
       end
     end
   end
 
   def logout
     session.delete(:user_id)
+    session.delete(:anonymous_chat_session_id)
     redirect_to book_assistant_index_path
   end
 
@@ -96,6 +118,23 @@ class BookAssistantController < ApplicationController
   end
 
   def process_session_query
+    # Handle empty messages
+    if params[:message].blank?
+      @response = { success: true, message: "How can I help you find books today?", tools_used: [] }
+
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.append("messages", partial: "assistant_response",
+                                                               locals: {
+                                                                 message: params[:message],
+                                                                 response: @response
+                                                               })
+        end
+        format.json { render json: @response }
+      end
+      return
+    end
+
     # Add user message
     @persistence_service.add_message(@chat_session.id, "user", params[:message])
 
@@ -123,34 +162,6 @@ class BookAssistantController < ApplicationController
       end
       format.html do
         redirect_to book_assistant_path(@chat_session)
-      end
-      format.json { render json: @response }
-    end
-  end
-
-  def process_cache_query
-    # Backward compatibility for cache-based tests
-    messages = ChatSessionService.get_messages(session[:chat_session_id])
-
-    assistant_service = BookAssistantService.new(
-      session_id: session[:chat_session_id],
-      messages: messages
-    )
-
-    @response = assistant_service.process_query(params[:message])
-
-    ChatSessionService.update_messages(session[:chat_session_id], @response[:messages]) if @response[:messages]
-
-    respond_to do |format|
-      format.turbo_stream do
-        render turbo_stream: turbo_stream.append("messages", partial: "message",
-                                                             locals: {
-                                                               message: params[:message],
-                                                               response: @response
-                                                             })
-      end
-      format.html do
-        redirect_to book_assistant_index_path
       end
       format.json { render json: @response }
     end

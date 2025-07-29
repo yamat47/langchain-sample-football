@@ -25,7 +25,7 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get index" do
-    get book_assistant_index_url, params: { legacy_chat: "true" }
+    get book_assistant_index_url
 
     assert_response :success
     assert_select "h1", text: /Book Recommendation Assistant/
@@ -34,7 +34,7 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "index page displays recent queries" do
-    get book_assistant_index_url, params: { legacy_chat: "true" }
+    get book_assistant_index_url
 
     assert_response :success
     # Check if recent queries are displayed
@@ -52,6 +52,9 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
     }, ["Looking for mystery books"]
 
     BookAssistantService.stub :new, mock_service do
+      # Ensure we have a session
+      get book_assistant_index_url
+
       post query_book_assistant_index_url, params: { message: "Looking for mystery books" },
                                            headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
@@ -65,6 +68,9 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should post query with json format" do
+    # Initialize session first
+    get book_assistant_index_url
+
     mock_service = Minitest::Mock.new
     mock_service.expect :process_query, {
       success: true,
@@ -88,6 +94,9 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should handle empty message" do
+    # Initialize session first
+    get book_assistant_index_url
+
     mock_service = Minitest::Mock.new
     mock_service.expect :process_query, {
       success: true,
@@ -104,6 +113,9 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should handle service errors gracefully" do
+    # Initialize session first
+    get book_assistant_index_url
+
     mock_service = Minitest::Mock.new
     mock_service.expect :process_query, {
       success: false,
@@ -123,6 +135,9 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should display tools used in response" do
+    # Initialize session first
+    get book_assistant_index_url
+
     mock_service = Minitest::Mock.new
     mock_service.expect :process_query, {
       success: true,
@@ -144,6 +159,9 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update recent queries after successful query" do
+    # Initialize session first
+    get book_assistant_index_url
+
     mock_service = Minitest::Mock.new
     mock_service.expect :process_query, {
       success: true,
@@ -162,7 +180,7 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "index page includes quick links" do
-    get book_assistant_index_url, params: { legacy_chat: "true" }
+    get book_assistant_index_url
 
     assert_response :success
 
@@ -172,6 +190,9 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "turbo stream response appends to messages container" do
+    # Initialize session first
+    get book_assistant_index_url
+
     mock_service = Minitest::Mock.new
     mock_service.expect :process_query, {
       success: true,
@@ -189,26 +210,26 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should initialize session on first visit" do
-    get book_assistant_index_url, params: { legacy_chat: "true" }
+    get book_assistant_index_url
 
     assert_response :success
-    assert_not_nil session[:chat_session_id]
+    assert_not_nil session[:anonymous_chat_session_id]
   end
 
   test "should maintain session across requests" do
     # First request
-    get book_assistant_index_url, params: { legacy_chat: "true" }
-    initial_session_id = session[:chat_session_id]
+    get book_assistant_index_url
+    initial_session_id = session[:anonymous_chat_session_id]
 
     # Second request
-    get book_assistant_index_url, params: { legacy_chat: "true" }
+    get book_assistant_index_url
 
-    assert_equal initial_session_id, session[:chat_session_id]
+    assert_equal initial_session_id, session[:anonymous_chat_session_id]
   end
 
-  test "should store conversation history in cache" do
+  test "should store conversation history in database" do
     # First, ensure we have a session
-    get book_assistant_index_url, params: { legacy_chat: "true" }
+    get book_assistant_index_url
 
     mock_service = Minitest::Mock.new
     mock_service.expect :process_query, {
@@ -222,23 +243,30 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
     }, ["Find fantasy books"]
 
     BookAssistantService.stub :new, mock_service do
-      post query_book_assistant_index_url, params: { message: "Find fantasy books" },
-                                           headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      assert_difference "ChatMessage.count", 2 do
+        post query_book_assistant_index_url, params: { message: "Find fantasy books" },
+                                             headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      end
 
       assert_response :success
 
-      # Verify messages were stored in cache
-      cached_messages = ChatSessionService.get_messages(session[:chat_session_id])
+      # Verify messages were stored in database
+      anonymous_user = User.anonymous_user
+      chat_session = anonymous_user.chat_sessions.find(session[:anonymous_chat_session_id])
+      messages = chat_session.chat_messages.ordered
 
-      assert_equal 2, cached_messages.length
-      assert_equal "user", cached_messages[0][:role]
-      assert_equal "Find fantasy books", cached_messages[0][:content]
+      assert_equal 2, messages.length
+      assert_equal "user", messages[0].role
+      assert_equal "Find fantasy books", messages[0].content
     end
   end
 
   test "should pass existing messages to service" do
-    # First, ensure we have a session
-    get book_assistant_index_url, params: { legacy_chat: "true" }
+    # Ensure anonymous user exists first
+    User.anonymous_user
+
+    # Initialize session
+    get book_assistant_index_url
 
     # Then set up a conversation with initial messages
     mock_service1 = Minitest::Mock.new
@@ -257,7 +285,7 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
                                            headers: { "Accept" => "text/vnd.turbo-stream.html" }
     end
 
-    # Now test that the second request gets the existing messages
+    # Now test that the second request gets the existing messages plus the new one
     service_called = false
     BookAssistantService.stub :new, lambda { |**kwargs|
       service_called = true
@@ -265,9 +293,11 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
       messages = kwargs[:messages]
 
       assert_not_nil session_id
-      assert_equal 2, messages.length
+      # The service should receive the existing messages plus the new message
+      assert_equal 3, messages.length
       assert_equal "Hello", messages[0][:content] || messages[0]["content"]
       assert_equal "Hi there!", messages[1][:content] || messages[1]["content"]
+      assert_equal "New message", messages[2][:content] || messages[2]["content"]
 
       # Return a mock service for the second call
       mock_service2 = Minitest::Mock.new
@@ -290,29 +320,27 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "new_chat action clears session" do
+  test "new_chat action creates new session" do
     # Get initial session ID
-    get book_assistant_index_url, params: { legacy_chat: "true" }
-    old_session_id = session[:chat_session_id]
+    get book_assistant_index_url
+    old_session_id = session[:anonymous_chat_session_id]
 
-    # Add some messages to cache
-    ChatSessionService.add_message(old_session_id, "user", "Old message")
-    ChatSessionService.add_message(old_session_id, "assistant", "Old response")
-
-    # Clear the chat
-    post new_chat_book_assistant_index_url,
-         headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    # Create a new chat
+    assert_difference "ChatSession.count", 1 do
+      post new_chat_book_assistant_index_url,
+           headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
 
     assert_response :success
 
     # Should have new session ID
-    assert_not_equal old_session_id, session[:chat_session_id]
+    assert_not_equal old_session_id, session[:anonymous_chat_session_id]
 
-    # Old session should be cleared
-    assert_empty ChatSessionService.get_messages(old_session_id)
+    # New session should exist and be empty
+    anonymous_user = User.anonymous_user
+    new_session = anonymous_user.chat_sessions.find(session[:anonymous_chat_session_id])
 
-    # New session should be empty
-    assert_empty ChatSessionService.get_messages(session[:chat_session_id])
+    assert_equal 0, new_session.chat_messages.count
   end
 
   test "new_chat action returns turbo stream response" do
@@ -325,5 +353,61 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
     # Should have turbo stream actions to clear and update messages
     assert_match(/turbo-stream action="update"/, response.body)
     assert_includes response.body, "messages", "Should target messages container"
+  end
+
+  test "anonymous chat creates session with anonymous user" do
+    # First, ensure anonymous user exists
+    User.anonymous_user
+
+    # This creates a session
+    assert_difference "ChatSession.count", 1 do
+      get book_assistant_index_url
+    end
+
+    # Then send a query - this should use the existing session, not create a new one
+    mock_service = Minitest::Mock.new
+    mock_service.expect :process_query, {
+      success: true,
+      message: "Response for anonymous",
+      tools_used: [],
+      messages: [
+        { role: "user", content: "Anonymous query" },
+        { role: "assistant", content: "Response for anonymous" }
+      ]
+    }, ["Anonymous query"]
+
+    # Should not create another session since we already have one
+    assert_no_difference "ChatSession.count" do
+      BookAssistantService.stub :new, mock_service do
+        post query_book_assistant_index_url, params: { message: "Anonymous query" },
+                                             headers: { "Accept" => "text/vnd.turbo-stream.html" }
+      end
+    end
+
+    assert_response :success
+
+    # Verify the session belongs to anonymous user
+    anonymous_user = User.anonymous_user
+
+    assert_predicate anonymous_user.chat_sessions, :exists?
+    assert_not_nil session[:anonymous_chat_session_id]
+  end
+
+  test "new_chat for anonymous user creates new anonymous session" do
+    # Ensure anonymous user exists
+    User.anonymous_user
+
+    assert_difference "ChatSession.count", 1 do
+      post new_chat_book_assistant_index_url,
+           headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    assert_response :success
+    assert_not_nil session[:anonymous_chat_session_id]
+
+    # Verify it belongs to anonymous user
+    anonymous_user = User.anonymous_user
+
+    assert anonymous_user.chat_sessions.exists?(id: session[:anonymous_chat_session_id])
   end
 end
