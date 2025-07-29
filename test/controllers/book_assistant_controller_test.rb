@@ -187,4 +187,136 @@ class BookAssistantControllerTest < ActionDispatch::IntegrationTest
       assert_match(/turbo-stream action="append" target="messages"/, response.body)
     end
   end
+
+  test "should initialize session on first visit" do
+    get book_assistant_index_url
+
+    assert_response :success
+    assert_not_nil session[:chat_session_id]
+  end
+
+  test "should maintain session across requests" do
+    # First request
+    get book_assistant_index_url
+    initial_session_id = session[:chat_session_id]
+
+    # Second request
+    get book_assistant_index_url
+
+    assert_equal initial_session_id, session[:chat_session_id]
+  end
+
+  test "should store conversation history in cache" do
+    mock_service = Minitest::Mock.new
+    mock_service.expect :process_query, {
+      success: true,
+      message: "Found books",
+      tools_used: [],
+      messages: [
+        { role: "user", content: "Find fantasy books" },
+        { role: "assistant", content: "Found books" }
+      ]
+    }, ["Find fantasy books"]
+
+    BookAssistantService.stub :new, mock_service do
+      post query_book_assistant_index_url, params: { message: "Find fantasy books" },
+                                           headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      assert_response :success
+      
+      # Verify messages were stored in cache
+      cached_messages = ChatSessionService.get_messages(session[:chat_session_id])
+      assert_equal 2, cached_messages.length
+      assert_equal "user", cached_messages[0][:role]
+      assert_equal "Find fantasy books", cached_messages[0][:content]
+    end
+  end
+
+  test "should pass existing messages to service" do
+    # First, set up a conversation with initial messages
+    mock_service1 = Minitest::Mock.new
+    mock_service1.expect :process_query, {
+      success: true,
+      message: "Hi there!",
+      tools_used: [],
+      messages: [
+        { role: "user", content: "Hello" },
+        { role: "assistant", content: "Hi there!" }
+      ]
+    }, ["Hello"]
+
+    BookAssistantService.stub :new, mock_service1 do
+      post query_book_assistant_index_url, params: { message: "Hello" },
+                                           headers: { "Accept" => "text/vnd.turbo-stream.html" }
+    end
+
+    # Now test that the second request gets the existing messages
+    service_called = false
+    BookAssistantService.stub :new, lambda { |**kwargs|
+      service_called = true
+      session_id = kwargs[:session_id]
+      messages = kwargs[:messages]
+
+      assert_not_nil session_id
+      assert_equal 2, messages.length
+      assert_equal "Hello", messages[0][:content] || messages[0]["content"]
+      assert_equal "Hi there!", messages[1][:content] || messages[1]["content"]
+
+      # Return a mock service for the second call
+      mock_service2 = Minitest::Mock.new
+      mock_service2.expect :process_query, {
+        success: true,
+        message: "Response",
+        tools_used: [],
+        messages: messages + [
+          { role: "user", content: "New message" },
+          { role: "assistant", content: "Response" }
+        ]
+      }, ["New message"]
+      mock_service2
+    } do
+      post query_book_assistant_index_url, params: { message: "New message" },
+                                           headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      assert_response :success
+      assert service_called, "Service should have been initialized with messages"
+    end
+  end
+
+  test "new_chat action clears session" do
+    # Get initial session ID
+    get book_assistant_index_url
+    old_session_id = session[:chat_session_id]
+    
+    # Add some messages to cache
+    ChatSessionService.add_message(old_session_id, "user", "Old message")
+    ChatSessionService.add_message(old_session_id, "assistant", "Old response")
+
+    # Clear the chat
+    post new_chat_book_assistant_index_url,
+         headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    
+    # Should have new session ID
+    assert_not_equal old_session_id, session[:chat_session_id]
+    
+    # Old session should be cleared
+    assert_empty ChatSessionService.get_messages(old_session_id)
+    
+    # New session should be empty
+    assert_empty ChatSessionService.get_messages(session[:chat_session_id])
+  end
+
+  test "new_chat action returns turbo stream response" do
+    post new_chat_book_assistant_index_url,
+         headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+    assert_response :success
+    assert_match(/turbo-stream/, response.body)
+
+    # Should have turbo stream actions to clear and update messages
+    assert_match(/turbo-stream action="update"/, response.body)
+    assert_includes response.body, "messages", "Should target messages container"
+  end
 end

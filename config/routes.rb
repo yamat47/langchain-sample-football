@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   resources :book_assistant, only: [:index] do
     collection do
       post :query
+      post :new_chat
     end
   end
 
