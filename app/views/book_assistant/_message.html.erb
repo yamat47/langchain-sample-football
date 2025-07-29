@@ -21,10 +21,11 @@
 
 <script>
   // Remove initial greeting when first message is added
-  document.addEventListener('DOMContentLoaded', () => {
+  // This runs immediately when the turbo stream inserts this content
+  (function() {
     const initialGreeting = document.getElementById('initial-greeting');
-    if (initialGreeting && document.querySelector('[data-remove-initial-greeting]')) {
+    if (initialGreeting) {
       initialGreeting.style.display = 'none';
     }
-  });
+  })();
 </script>
