@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_28_073311) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_29_034032) do
   create_table "book_queries", force: :cascade do |t|
     t.text "query_text", null: false
     t.text "response_text"
@@ -56,6 +56,31 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_28_073311) do
     t.index ["title"], name: "index_books_on_title"
   end
 
+  create_table "chat_messages", force: :cascade do |t|
+    t.integer "chat_session_id", null: false
+    t.string "role", null: false
+    t.text "content", null: false
+    t.integer "position", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chat_session_id", "position"], name: "index_chat_messages_on_chat_session_id_and_position", unique: true
+    t.index ["chat_session_id"], name: "index_chat_messages_on_chat_session_id"
+    t.index ["created_at"], name: "index_chat_messages_on_created_at"
+  end
+
+  create_table "chat_sessions", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "session_number", null: false
+    t.datetime "last_activity_at", null: false
+    t.integer "messages_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_chat_sessions_on_created_at"
+    t.index ["user_id", "last_activity_at"], name: "index_chat_sessions_on_user_id_and_last_activity_at"
+    t.index ["user_id", "session_number"], name: "index_chat_sessions_on_user_id_and_session_number", unique: true
+    t.index ["user_id"], name: "index_chat_sessions_on_user_id"
+  end
+
   create_table "reviews", force: :cascade do |t|
     t.integer "book_id", null: false
     t.integer "rating", null: false
@@ -66,7 +91,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_28_073311) do
     t.index ["book_id"], name: "index_reviews_on_book_id"
   end
 
+  create_table "users", force: :cascade do |t|
+    t.string "identifier", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["created_at"], name: "index_users_on_created_at"
+    t.index ["identifier"], name: "index_users_on_identifier", unique: true
+  end
+
   add_foreign_key "book_similarities", "books"
   add_foreign_key "book_similarities", "books", column: "similar_book_id"
+  add_foreign_key "chat_messages", "chat_sessions"
+  add_foreign_key "chat_sessions", "users"
   add_foreign_key "reviews", "books"
 end
