@@ -157,7 +157,7 @@ class BookAssistantController < ApplicationController
                         else
                           @response[:message]
                         end
-      
+
       @persistence_service.add_message(@chat_session.id, "assistant", message_content)
     end
 

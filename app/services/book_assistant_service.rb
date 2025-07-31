@@ -17,15 +17,8 @@ class BookAssistantService
       @messages << { role: "user", content: message }
       limit_message_history!
 
-      # Detect if this is a book-related query
-      is_book_related = book_related_query?(message)
-      Rails.logger.info "Book Assistant Query: '#{message}' - Book Related: #{is_book_related}"
-      
-      if is_book_related
-        process_with_blocks(message, start_time)
-      else
-        process_standard(message, start_time)
-      end
+      # Always use blocks processing for consistent formatting
+      process_with_blocks(message, start_time)
     rescue StandardError => e
       handle_error(e, message, start_time)
     end
@@ -37,21 +30,21 @@ class BookAssistantService
 
   private
 
-  def book_related_query?(message)
-    book_keywords = [
-      "book", "books", "novel", "novels", "read", "reading", "recommend", "recommendation", "author", "writer", "literature", "fiction", "non-fiction", "nonfiction", "mystery", "thriller", "romance", "fantasy", "sci-fi", "science fiction", "biography", "memoir", "history", "bestseller", "genre", "story", "stories", "harry potter", "stephen king"
-    ]
-
-    message_lower = message.downcase
-    book_keywords.any? { |keyword| message_lower.include?(keyword) }
-  end
-
   def process_with_blocks(message, start_time)
     # Create parser for structured output
     parser = BookRecommendationParser.create_parser
 
     # Build assistant with enhanced instructions
     assistant = build_assistant_with_blocks_instructions
+
+    # Log the full conversation context
+    Rails.logger.info "=== BLOCKS PROCESSING START ==="
+    Rails.logger.info "Current message: #{message}"
+    Rails.logger.info "Message history count: #{@messages.size}"
+    Rails.logger.info "Last 3 messages in history:"
+    @messages.last(3).each_with_index do |msg, idx|
+      Rails.logger.info "  [#{idx}] Role: #{msg[:role]}, Content preview: #{msg[:content].to_s[0..200]}..."
+    end
 
     # Get response
     messages = assistant.add_message_and_run(
@@ -60,14 +53,16 @@ class BookAssistantService
     )
 
     response = messages.last
-    
+
     # Log the raw response for debugging
     Rails.logger.info "Book Assistant Raw Response: #{response.content}"
+    Rails.logger.info "Book Assistant Message History Count: #{@messages.size}"
 
     # Try to parse as structured response
     begin
+      # First try to parse the response as-is
       structured_response = parser.parse(response.content)
-      Rails.logger.info "Book Assistant Parsed Blocks: #{structured_response["blocks"]&.size || 0} blocks"
+      Rails.logger.info "Book Assistant Parsed Blocks: #{structured_response['blocks']&.size || 0} blocks"
       @messages << { role: "assistant", content: response.content }
 
       response_time_ms = ((Time.current - start_time) * 1000).round
@@ -77,7 +72,7 @@ class BookAssistantService
       text_content = BookRecommendationParser.extract_text_content(blocks)
       # Ensure we always have some content for the message
       text_content = "I've found some book recommendations for you." if text_content.blank?
-      
+
       BookQuery.log_query(message, text_content, true, response_time_ms)
 
       # Return formatted response with blocks
@@ -90,34 +85,65 @@ class BookAssistantService
         messages: @messages
       }
     rescue Langchain::OutputParsers::OutputParserException => e
-      Rails.logger.warn "Failed to parse structured response, falling back to text: #{e.message}"
-      # Fall back to standard processing
-      @messages.pop # Remove the user message we added
-      process_standard(message, start_time)
+      Rails.logger.error "Failed to parse structured response: #{e.message}"
+      Rails.logger.error "Response was: #{response.content}"
+      
+      # Try to extract JSON from the response if it contains JSON
+      json_match = response.content.match(/\{[\s\S]*"blocks"[\s\S]*\}/m)
+      if json_match
+        begin
+          Rails.logger.info "Attempting to extract JSON from response..."
+          structured_response = JSON.parse(json_match[0])
+          
+          # Save the properly formatted JSON
+          @messages << { role: "assistant", content: json_match[0] }
+          
+          response_time_ms = ((Time.current - start_time) * 1000).round
+          
+          # Log the query
+          blocks = structured_response["blocks"] || structured_response[:blocks]
+          text_content = BookRecommendationParser.extract_text_content(blocks)
+          text_content = "I've found some book recommendations for you." if text_content.blank?
+          
+          BookQuery.log_query(message, text_content, true, response_time_ms)
+          
+          # Return formatted response with blocks
+          return {
+            message: text_content,
+            blocks: structured_response["blocks"] || structured_response[:blocks],
+            success: true,
+            timestamp: Time.current,
+            tools_used: extract_tools_used(response),
+            messages: @messages
+          }
+        rescue JSON::ParserError => json_error
+          Rails.logger.error "Failed to extract JSON: #{json_error.message}"
+        end
+      end
+      
+      # Still save the response and return a text-only block
+      @messages << { role: "assistant", content: response.content }
+      
+      response_time_ms = ((Time.current - start_time) * 1000).round
+      BookQuery.log_query(message, response.content, false, response_time_ms)
+      
+      # Return a text block even on parse failure
+      {
+        message: response.content,
+        blocks: [
+          {
+            "type" => "text",
+            "content" => { "markdown" => response.content }
+          }
+        ],
+        success: true,
+        timestamp: Time.current,
+        tools_used: extract_tools_used(response),
+        messages: @messages
+      }
     end
   end
 
-  def process_standard(message, start_time)
-    # Standard processing (existing logic)
-    messages = @assistant.add_message_and_run(
-      content: message,
-      auto_tool_execution: true
-    )
-
-    response = messages.last
-    @messages << { role: "assistant", content: response.content }
-
-    response_time_ms = ((Time.current - start_time) * 1000).round
-
-    BookQuery.log_query(
-      message,
-      response.content,
-      true,
-      response_time_ms
-    )
-
-    format_response(response).merge(messages: @messages)
-  end
 
   def build_assistant_with_blocks_instructions
     assistant = Langchain::Assistant.new(
@@ -125,16 +151,21 @@ class BookAssistantService
       instructions: assistant_instructions_with_blocks,
       tools: available_tools
     )
-    
+
     # Restore conversation history to the assistant
     @messages.each do |msg|
       # Ensure role is a string and valid
       role = msg[:role].to_s
       next unless ["system", "assistant", "user", "tool"].include?(role)
+
+      # For assistant messages, extract text content from blocks if present
+      content = extract_message_content(role, msg[:content])
       
-      assistant.add_message(role: role, content: msg[:content])
+      Rails.logger.info "Adding message to blocks assistant - Role: #{role}, Original content length: #{msg[:content].to_s.length}, Extracted content: #{content[0..100]}..."
+      
+      assistant.add_message(role: role, content: content)
     end
-    
+
     assistant
   end
 
@@ -158,7 +189,9 @@ class BookAssistantService
       role = msg[:role].to_s
       next unless ["system", "assistant", "user", "tool"].include?(role)
 
-      assistant.add_message(role: role, content: msg[:content])
+      # For assistant messages, extract text content from blocks if present
+      content = extract_message_content(role, msg[:content])
+      assistant.add_message(role: role, content: content)
     end
 
     assistant
@@ -213,6 +246,10 @@ class BookAssistantService
       Be friendly, informative, and enthusiastic about books!
 
       If you cannot find specific information, acknowledge this and suggest alternatives.
+
+      IMPORTANT: You MUST ALWAYS respond in JSON blocks format, even for follow-up questions.
+      NEVER include any text before or after the JSON object.
+      Your response MUST start with { and end with }
     INSTRUCTIONS
   end
 
@@ -279,5 +316,46 @@ class BookAssistantService
     end
 
     tools_used
+  end
+
+  def extract_message_content(role, content)
+    # For assistant messages, extract text content from blocks if present
+    if role == "assistant" && content.include?("{") && content.include?("blocks")
+      begin
+        parsed = JSON.parse(content)
+        if parsed["blocks"]
+          text_content = BookRecommendationParser.extract_text_content(parsed["blocks"])
+          # If no text content, create a summary from other blocks
+          text_content = summarize_blocks(parsed["blocks"]) if text_content.blank?
+          text_content
+        else
+          content
+        end
+      rescue JSON::ParserError
+        content
+      end
+    else
+      content
+    end
+  end
+
+  def summarize_blocks(blocks)
+    summaries = []
+
+    blocks.each do |block|
+      case block["type"]
+      when "book_card"
+        summaries << "I recommended #{block['content']['title']} by #{block['content']['author']}"
+      when "book_list"
+        count = block["content"]["books"]&.size || 0
+        summaries << "I showed you #{count} book recommendations"
+      when "book_spotlight"
+        summaries << "I provided detailed information about #{block['content']['title']}"
+      end
+    end
+
+    return "" if summaries.empty?
+
+    summaries.join(". ") + "."
   end
 end
