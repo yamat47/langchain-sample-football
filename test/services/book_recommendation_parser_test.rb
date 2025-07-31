@@ -23,7 +23,7 @@ class BookRecommendationParserTest < ActiveSupport::TestCase
     assert_equal "object", block_schema[:type]
     assert_includes block_schema[:properties], :type
     assert_includes block_schema[:properties], :content
-    assert_equal ["text", "book_card", "book_list", "image"], block_schema[:properties][:type][:enum]
+    assert_equal ["text", "book_card", "book_spotlight", "book_list", "image"], block_schema[:properties][:type][:enum]
   end
 
   test "creates structured output parser instance" do
@@ -36,11 +36,12 @@ class BookRecommendationParserTest < ActiveSupport::TestCase
   test "provides format instructions" do
     instructions = BookRecommendationParser.format_instructions
 
-    assert_includes instructions, "You MUST respond with a JSON object"
+    assert_includes instructions, "You MUST respond with ONLY a JSON object"
     assert_includes instructions, "blocks"
     assert_includes instructions, "text"
     assert_includes instructions, "book_card"
     assert_includes instructions, "book_list"
+    assert_includes instructions, "book_spotlight"
   end
 
   test "parses valid block response" do

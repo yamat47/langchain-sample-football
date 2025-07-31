@@ -7,7 +7,7 @@ class BookAssistantEmptyContentTest < ActionDispatch::IntegrationTest
   def setup
     @user = User.create!(identifier: "testuser123")
     @chat_session = @user.chat_sessions.create!
-    
+
     # Set session to authenticate the user
     post identify_book_assistant_index_path, params: { identifier: @user.identifier }
   end
@@ -42,9 +42,10 @@ class BookAssistantEmptyContentTest < ActionDispatch::IntegrationTest
       }, as: :turbo_stream
 
       assert_response :success
-      
+
       # Verify the message was saved with fallback content
       last_message = @chat_session.chat_messages.last
+
       assert_equal "assistant", last_message.role
       assert_equal "I've found some book recommendations for you.", last_message.content
     end
@@ -88,9 +89,10 @@ class BookAssistantEmptyContentTest < ActionDispatch::IntegrationTest
       }, as: :turbo_stream
 
       assert_response :success
-      
+
       # Verify the message was saved with extracted content
       last_message = @chat_session.chat_messages.last
+
       assert_equal "assistant", last_message.role
       assert_equal "Here are your recommendations:", last_message.content
     end

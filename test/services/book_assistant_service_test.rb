@@ -86,18 +86,25 @@ class BookAssistantServiceTest < ActiveSupport::TestCase
   end
 
   test "process_query handles errors gracefully" do
-    mock_assistant = Minitest::Mock.new
-    mock_assistant.expect :add_message_and_run, nil do |_args|
+    # Create a mock assistant that raises an error
+    mock_blocks_assistant = Object.new
+    
+    mock_blocks_assistant.define_singleton_method(:add_message_and_run) do |content:, auto_tool_execution: true|
       raise StandardError, "API Error"
     end
+    
+    mock_blocks_assistant.define_singleton_method(:add_message) do |role:, content:|
+      # No-op for message tracking
+    end
 
-    @service.instance_variable_set(:@assistant, mock_assistant)
+    # Stub the build method to return our mock assistant
+    @service.stub :build_assistant_with_blocks_instructions, mock_blocks_assistant do
+      result = @service.process_query("Test query")
 
-    result = @service.process_query("Test query")
-
-    assert_not result[:success]
-    assert_includes result[:message], "encountered an error"
-    assert_equal "API Error", result[:error]
+      assert_not result[:success]
+      assert_includes result[:message], "encountered an error"
+      assert_equal "API Error", result[:error]
+    end
   end
 
   test "process_query tracks response time" do
@@ -238,68 +245,105 @@ class BookAssistantServiceTest < ActiveSupport::TestCase
 
   test "process_query should update messages array with user and assistant messages" do
     service = BookAssistantService.new
-    OpenStruct.new(content: "Here are some book recommendations", tool_calls: nil)
 
-    mock_assistant = Minitest::Mock.new
-    # Define add_message_and_run with keyword arguments
-    def mock_assistant.add_message_and_run(content:, auto_tool_execution: true)
-      [OpenStruct.new(content: "Here are some book recommendations", tool_calls: nil)]
+    # Create mock for book-related queries (structured response)
+    mock_blocks_assistant = Object.new
+
+    # Define add_message_and_run to return structured JSON response
+    mock_blocks_assistant.define_singleton_method(:add_message_and_run) do |content:, auto_tool_execution: true|
+      response_json = {
+        blocks: [
+          {
+            type: "text",
+            content: { markdown: "Here are some book recommendations" }
+          }
+        ]
+      }.to_json
+
+      [OpenStruct.new(content: response_json, tool_calls: nil)]
     end
 
-    service.instance_variable_set(:@assistant, mock_assistant)
+    # Define add_message for history tracking
+    mock_blocks_assistant.define_singleton_method(:add_message) do |role:, content:|
+      # No-op
+    end
 
-    # Verify initial state
-    assert_empty service.instance_variable_get(:@messages)
+    # Mock build_assistant_with_blocks_instructions to return our mock
+    service.stub :build_assistant_with_blocks_instructions, mock_blocks_assistant do
+      # Verify initial state
+      assert_empty service.instance_variable_get(:@messages)
 
-    result = service.process_query("Recommend fantasy books")
+      result = service.process_query("Recommend fantasy books")
 
-    # Check result structure
-    assert_not_nil result
-    assert_not_equal result[:success], false, "Query should succeed: #{result[:error]}"
+      # Check result structure
+      assert_not_nil result
+      assert result[:success], "Query should succeed: #{result[:error]}"
 
-    messages = result[:messages]
+      messages = result[:messages]
 
-    assert_not_nil messages, "Messages should not be nil"
-    assert_equal 2, messages.length, "Should have user and assistant messages"
-    assert_equal({ role: "user", content: "Recommend fantasy books" }, messages[0])
-    assert_equal({ role: "assistant", content: "Here are some book recommendations" }, messages[1])
+      assert_not_nil messages, "Messages should not be nil"
+      assert_equal 2, messages.length, "Should have user and assistant messages"
+      assert_equal({ role: "user", content: "Recommend fantasy books" }, messages[0])
+      # The assistant message content will be the JSON response
+      assert_equal "assistant", messages[1][:role]
+      assert_includes messages[1][:content], "blocks"
+    end
   end
 
   test "process_query should maintain conversation history across multiple calls" do
     service = BookAssistantService.new
 
     # Mock assistant that remembers calls
-    mock_assistant = Minitest::Mock.new
+    call_count = 0
+    responses = [
+      {
+        blocks: [
+          {
+            type: "text",
+            content: { markdown: "I can help with that" }
+          }
+        ]
+      }.to_json,
+      {
+        blocks: [
+          {
+            type: "text",
+            content: { markdown: "Here are fantasy books" }
+          }
+        ]
+      }.to_json
+    ]
 
-    def mock_assistant.add_message_and_run(content:, auto_tool_execution: true)
-      # Return different responses based on call count
-      @call_count ||= 0
-      response = @responses ||= ["I can help with that", "Here are fantasy books"]
-      result = [OpenStruct.new(content: response[@call_count], tool_calls: nil)]
-      @call_count += 1
-      result
+    mock_blocks_assistant = Object.new
+    mock_blocks_assistant.define_singleton_method(:add_message_and_run) do |content:, auto_tool_execution: true|
+      response = responses[call_count]
+      call_count += 1
+      [OpenStruct.new(content: response, tool_calls: nil)]
     end
 
-    service.instance_variable_set(:@assistant, mock_assistant)
+    mock_blocks_assistant.define_singleton_method(:add_message) do |role:, content:|
+      # No-op for history tracking
+    end
 
-    # First query
-    result1 = service.process_query("Hello")
+    # Mock build_assistant_with_blocks_instructions only
+    service.stub :build_assistant_with_blocks_instructions, mock_blocks_assistant do
+      # First query - "Hello" now also uses blocks processing
+      result1 = service.process_query("Hello")
 
-    assert_equal 2, result1[:messages].length
+      assert_equal 2, result1[:messages].length
 
-    # Update service messages for next call
-    service.instance_variable_set(:@messages, result1[:messages])
+      # Second query - "Show me fantasy books"
+      result2 = service.process_query("Show me fantasy books")
 
-    # Second query
-    result2 = service.process_query("Show me fantasy books")
+      messages = result2[:messages]
 
-    messages = result2[:messages]
-
-    assert_equal 4, messages.length
-    assert_equal "Hello", messages[0][:content]
-    assert_equal "I can help with that", messages[1][:content]
-    assert_equal "Show me fantasy books", messages[2][:content]
-    assert_equal "Here are fantasy books", messages[3][:content]
+      assert_equal 4, messages.length
+      assert_equal "Hello", messages[0][:content]
+      # Both messages will now contain JSON blocks
+      assert_includes messages[1][:content], "blocks"
+      assert_equal "Show me fantasy books", messages[2][:content]
+      assert_includes messages[3][:content], "blocks"
+    end
   end
 
   test "should limit message history to prevent token overflow" do
@@ -317,22 +361,6 @@ class BookAssistantServiceTest < ActiveSupport::TestCase
     assert_equal 20, service.instance_variable_get(:@messages).length
     # First message should be from question 15 (30 messages removed)
     assert_equal "Question 15", service.instance_variable_get(:@messages).first[:content]
-  end
-
-  test "should detect book-related queries" do
-    service = BookAssistantService.new
-
-    # Book-related queries
-    assert service.send(:book_related_query?, "Can you recommend some books?")
-    assert service.send(:book_related_query?, "What are the best mystery novels?")
-    assert service.send(:book_related_query?, "Tell me about Harry Potter")
-    assert service.send(:book_related_query?, "I'm looking for science fiction books")
-    assert service.send(:book_related_query?, "Show me books by Stephen King")
-
-    # Non-book queries
-    assert_not service.send(:book_related_query?, "What's the weather today?")
-    assert_not service.send(:book_related_query?, "How are you?")
-    assert_not service.send(:book_related_query?, "Tell me a joke")
   end
 
   test "should process book queries with blocks format" do
@@ -369,22 +397,33 @@ class BookAssistantServiceTest < ActiveSupport::TestCase
     end
   end
 
-  test "should fall back to text-only response when parsing fails" do
+  test "should fall back to text-only blocks when parsing fails" do
     service = BookAssistantService.new
 
-    mock_assistant = Minitest::Mock.new
-    def mock_assistant.add_message_and_run(content:, auto_tool_execution: true)
-      # Return invalid JSON to trigger fallback
-      [BookAssistantServiceTest::MockMessage.new("This is a plain text response about books")]
+    # Create a custom mock class for blocks assistant (will fail)
+    mock_blocks_assistant = Object.new
+
+    mock_blocks_assistant.define_singleton_method(:add_message_and_run) do |content:, auto_tool_execution: true|
+      # Return invalid JSON (will fail parsing)
+      [BookAssistantServiceTest::MockMessage.new("{ invalid json }")]
     end
 
-    service.instance_variable_set(:@assistant, mock_assistant)
+    mock_blocks_assistant.define_singleton_method(:add_message) do |role:, content:|
+      # No-op for message tracking
+    end
 
-    result = service.process_query("Tell me about books")
+    # Mock the build methods to return our mock assistants
+    service.stub :build_assistant_with_blocks_instructions, mock_blocks_assistant do
+      result = service.process_query("Tell me about books")
 
-    assert result[:success]
-    assert_nil result[:blocks]
-    assert_equal "This is a plain text response about books", result[:message]
+      assert result[:success]
+      # The fallback response now has text blocks
+      assert_not_nil result[:blocks]
+      assert_equal 1, result[:blocks].size
+      assert_equal "text", result[:blocks][0]["type"]
+      assert_equal "{ invalid json }", result[:blocks][0]["content"]["markdown"]
+      assert_equal "{ invalid json }", result[:message]
+    end
   end
 
   test "should handle mixed content responses" do
@@ -438,6 +477,30 @@ class BookAssistantServiceTest < ActiveSupport::TestCase
       assert_equal "book_card", result[:blocks][0]["type"]
       # Should have a default message when no text content
       assert_equal "I've found some book recommendations for you.", result[:message]
+    end
+  end
+
+  test "should extract JSON from response with surrounding text" do
+    service = BookAssistantService.new
+
+    # Mock the assistant that returns JSON with surrounding text
+    mock_blocks_assistant = Minitest::Mock.new
+    def mock_blocks_assistant.add_message_and_run(content:, auto_tool_execution: true)
+      response_with_text = 'Here are some books for you:\n\n{"blocks":[{"type":"text","content":{"markdown":"I found these great books:"}},{"type":"book_list","content":{"title":"Mystery Books","books":[{"isbn":"978-1234567890","title":"Mystery Book","author":"Mystery Author","rating":4.5,"genres":["Mystery"],"price":19.99,"image_url":"https://example.com/book.jpg"}]}}]}\n\nEnjoy reading!'
+      [BookAssistantServiceTest::MockMessage.new(response_with_text)]
+    end
+
+    # Stub the method that creates the blocks assistant
+    service.stub :build_assistant_with_blocks_instructions, mock_blocks_assistant do
+      result = service.process_query("Show me mystery books")
+
+      assert result[:success]
+      assert_not_nil result[:blocks]
+      assert_equal 2, result[:blocks].size
+      assert_equal "text", result[:blocks][0]["type"]
+      assert_equal "book_list", result[:blocks][1]["type"]
+      assert_equal "I found these great books:", result[:blocks][0]["content"]["markdown"]
+      assert_equal "Mystery Books", result[:blocks][1]["content"]["title"]
     end
   end
 end
