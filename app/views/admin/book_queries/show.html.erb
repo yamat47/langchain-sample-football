@@ -31,9 +31,16 @@
 
   <% if @book_query.success %>
     <div style="background: #e8f5e9; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-      <h3>Response</h3>
+      <h3>Response (Text Extract)</h3>
       <pre style="background: white; padding: 15px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word;"><%= @book_query.response_text %></pre>
     </div>
+    
+    <% if @book_query.full_response.present? %>
+      <div style="background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+        <h3>Full JSON Response</h3>
+        <pre style="background: white; padding: 15px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; font-size: 13px; overflow-x: auto;"><%= JSON.pretty_generate(JSON.parse(@book_query.full_response)) rescue @book_query.full_response %></pre>
+      </div>
+    <% end %>
   <% else %>
     <div style="background: #ffebee; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
       <h3>Error Message</h3>
