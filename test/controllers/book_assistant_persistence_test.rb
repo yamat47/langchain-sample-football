@@ -1,12 +1,13 @@
 require "test_helper"
 
 class BookAssistantPersistenceTest < ActionDispatch::IntegrationTest
-  test "should show user identification form when no user" do
+  test "should show chat interface for anonymous users" do
     get book_assistant_index_url
 
     assert_response :success
-    assert_select "form[action=?]", identify_book_assistant_index_path
-    assert_select "input[name='identifier']"
+    assert_select "#chat-container"
+    assert_select "form[action=?]", query_book_assistant_index_path
+    assert_select "a[href=?]", identify_book_assistant_index_path, "Sign In"
   end
 
   test "should identify user and redirect to sessions list" do
@@ -137,9 +138,10 @@ class BookAssistantPersistenceTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to book_assistant_index_path
 
-    # Should show identification form again
+    # Should show chat interface for anonymous user
     get book_assistant_index_url
 
-    assert_select "form[action=?]", identify_book_assistant_index_path
+    assert_select "#chat-container"
+    assert_select "a[href=?]", identify_book_assistant_index_path, "Sign In"
   end
 end
