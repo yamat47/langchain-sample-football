@@ -73,7 +73,13 @@ class BookAssistantService
       # Ensure we always have some content for the message
       text_content = "I've found some book recommendations for you." if text_content.blank?
 
-      BookQuery.log_query(message, text_content, true, response_time_ms)
+      # Save full JSON response
+      full_response_json = {
+        blocks: structured_response["blocks"] || structured_response[:blocks],
+        tools_used: extract_tools_used(response)
+      }.to_json
+      
+      BookQuery.log_query(message, text_content, true, response_time_ms, full_response_json)
 
       # Return formatted response with blocks
       {
@@ -105,7 +111,13 @@ class BookAssistantService
           text_content = BookRecommendationParser.extract_text_content(blocks)
           text_content = "I've found some book recommendations for you." if text_content.blank?
           
-          BookQuery.log_query(message, text_content, true, response_time_ms)
+          # Save full JSON response
+          full_response_json = {
+            blocks: structured_response["blocks"] || structured_response[:blocks],
+            tools_used: extract_tools_used(response)
+          }.to_json
+          
+          BookQuery.log_query(message, text_content, true, response_time_ms, full_response_json)
           
           # Return formatted response with blocks
           return {
@@ -125,7 +137,7 @@ class BookAssistantService
       @messages << { role: "assistant", content: response.content }
       
       response_time_ms = ((Time.current - start_time) * 1000).round
-      BookQuery.log_query(message, response.content, false, response_time_ms)
+      BookQuery.log_query(message, response.content, false, response_time_ms, nil)
       
       # Return a text block even on parse failure
       {
@@ -284,7 +296,8 @@ class BookAssistantService
         message,
         error.message,
         false,
-        response_time_ms
+        response_time_ms,
+        nil
       )
     end
 
