@@ -9,13 +9,14 @@ class BookQuery < ApplicationRecord
   scope :successful, -> { where(success: true) }
 
   # Class methods
-  def self.log_query(query, response, success, response_time = nil)
+  def self.log_query(query, response, success, response_time = nil, full_response = nil)
     create!(
       query_text: query,
       response_text: response,
       success: success,
       response_time_ms: response_time,
-      error_message: success ? nil : response
+      error_message: success ? nil : response,
+      full_response: full_response
     )
   end
 end

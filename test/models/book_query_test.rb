@@ -101,6 +101,28 @@ class BookQueryTest < ActiveSupport::TestCase
     assert_equal 1500, query.response_time_ms
   end
 
+  test "log_query creates record with full_response" do
+    full_response_json = { blocks: [{ type: "text", content: { markdown: "Test" } }] }.to_json
+
+    assert_difference "BookQuery.count", 1 do
+      BookQuery.log_query(
+        "Test query with full response",
+        "Test response",
+        true,
+        1500,
+        full_response_json
+      )
+    end
+
+    query = BookQuery.last
+
+    assert_equal "Test query with full response", query.query_text
+    assert_equal "Test response", query.response_text
+    assert query.success
+    assert_equal 1500, query.response_time_ms
+    assert_equal full_response_json, query.full_response
+  end
+
   test "should allow blank response_text" do
     @query.response_text = nil
 
