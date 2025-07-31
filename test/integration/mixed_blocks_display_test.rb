@@ -80,12 +80,12 @@ class MixedBlocksDisplayTest < ActionDispatch::IntegrationTest
       }, as: :turbo_stream
 
       assert_response :success
-      
+
       # Check that response contains expected structure
       assert_match(/text-block/, response.body)
       assert_match(/book-card/, response.body)
       assert_match(/book-list/, response.body)
-      
+
       # Check specific content
       assert_match(/Test Book Title/, response.body)
       assert_match(/Test Author/, response.body)
@@ -133,15 +133,15 @@ class MixedBlocksDisplayTest < ActionDispatch::IntegrationTest
       }, as: :turbo_stream
 
       assert_response :success
-      
+
       # Verify book card appears before text
       body = response.body
-      book_card_index = body.index('book-card')
-      text_block_index = body.index('exactly what you were looking for')
-      
+      book_card_index = body.index("book-card")
+      text_block_index = body.index("exactly what you were looking for")
+
       assert_not_nil book_card_index
       assert_not_nil text_block_index
-      assert book_card_index < text_block_index, "Book card should appear before explanatory text"
+      assert_operator book_card_index, :<, text_block_index, "Book card should appear before explanatory text"
     end
 
     mock_service.verify

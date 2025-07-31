@@ -63,7 +63,7 @@ class BookMixedBlocksTest < ActiveSupport::TestCase
           }
         ]
       }.to_json
-      
+
       [BookMixedBlocksTest::MockMessage.new(response_json)]
     end
 
@@ -146,7 +146,7 @@ class BookMixedBlocksTest < ActiveSupport::TestCase
           }
         ]
       }.to_json
-      
+
       [BookMixedBlocksTest::MockMessage.new(response_json)]
     end
 
@@ -197,7 +197,7 @@ class BookMixedBlocksTest < ActiveSupport::TestCase
           }
         ]
       }.to_json
-      
+
       [BookMixedBlocksTest::MockMessage.new(response_json)]
     end
 

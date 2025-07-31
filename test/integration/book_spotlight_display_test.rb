@@ -55,19 +55,19 @@ class BookSpotlightDisplayTest < ActionDispatch::IntegrationTest
       }, as: :turbo_stream
 
       assert_response :success
-      
+
       # Check spotlight-specific elements
       assert_match(/book-spotlight/, response.body)
       assert_match(/The Hunger Games/, response.body)
       assert_match(/Suzanne Collins/, response.body)
-      
+
       # Check extended content sections
       assert_match(/Overview/, response.body)
       assert_match(/Synopsis/, response.body)
       assert_match(/Key Themes/, response.body)
       assert_match(/Why This Book\?/, response.body)
       assert_match(/If You Like This, Try:/, response.body)
-      
+
       # Check specific content
       assert_match(/nation of Panem/, response.body)
       assert_match(/Survival/, response.body)
@@ -116,12 +116,12 @@ class BookSpotlightDisplayTest < ActionDispatch::IntegrationTest
       }, as: :turbo_stream
 
       assert_response :success
-      
+
       # Should show basic info
       assert_match(/Simple Book/, response.body)
       assert_match(/Basic Author/, response.body)
       assert_match(/No cover available/, response.body)
-      
+
       # Should not show optional sections
       assert_no_match(/Key Themes/, response.body)
       assert_no_match(/Why This Book\?/, response.body)
