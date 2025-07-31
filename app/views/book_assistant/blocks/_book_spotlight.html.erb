@@ -1,0 +1,98 @@
+<div class="book-spotlight">
+  <div class="spotlight-header">
+    <div class="spotlight-image">
+      <% if block["image_url"].present? %>
+        <%= image_tag block["image_url"], 
+                      alt: block["title"],
+                      loading: "lazy" %>
+      <% else %>
+        <div class="no-cover">
+          No cover available
+        </div>
+      <% end %>
+    </div>
+    
+    <div class="spotlight-info">
+      <h2><%= block["title"] %></h2>
+      <p class="author">by <%= block["author"] %></p>
+      
+      <% if block["rating"].present? %>
+        <div class="rating">
+          <div class="stars">
+            <% full_stars = block["rating"].to_i %>
+            <% half_star = (block["rating"] - full_stars) >= 0.5 %>
+            <% empty_stars = 5 - full_stars - (half_star ? 1 : 0) %>
+            
+            <% full_stars.times do %>★<% end %>
+            <% if half_star %>☆<% end %>
+            <% empty_stars.times do %>☆<% end %>
+          </div>
+          <span class="rating-text">
+            <%= block["rating"] %>/5
+          </span>
+        </div>
+      <% end %>
+      
+      <% if block["genres"].present? && block["genres"].any? %>
+        <div class="genres">
+          <% block["genres"].each do |genre| %>
+            <span class="genre-tag">
+              <%= genre %>
+            </span>
+          <% end %>
+        </div>
+      <% end %>
+      
+      <% if block["price"].present? %>
+        <p class="price">
+          $<%= number_with_precision(block["price"], precision: 2) %>
+        </p>
+      <% end %>
+    </div>
+  </div>
+  
+  <div class="spotlight-content">
+    <% if block["description"].present? %>
+      <div class="description">
+        <h3>Overview</h3>
+        <p><%= block["description"] %></p>
+      </div>
+    <% end %>
+    
+    <% if block["extended_description"].present? %>
+      <div class="extended-description">
+        <h3>Synopsis</h3>
+        <p><%= block["extended_description"] %></p>
+      </div>
+    <% end %>
+    
+    <% if block["key_themes"].present? && block["key_themes"].any? %>
+      <div class="key-themes">
+        <h3>Key Themes</h3>
+        <ul>
+          <% block["key_themes"].each do |theme| %>
+            <li><%= theme %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+    
+    <% if block["why_recommended"].present? %>
+      <div class="recommendation-reason">
+        <h3>Why This Book?</h3>
+        <p><%= block["why_recommended"] %></p>
+      </div>
+    <% end %>
+    
+    <% if block["similar_books"].present? && block["similar_books"].any? %>
+      <div class="similar-books">
+        <h3>If You Like This, Try:</h3>
+        <ul class="similar-list">
+          <% block["similar_books"].each do |book_title| %>
+            <li><%= book_title %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+  </div>
+</div>

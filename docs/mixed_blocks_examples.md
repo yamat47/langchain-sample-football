@@ -2,6 +2,14 @@
 
 This document shows various patterns for mixing text and book blocks in responses.
 
+## Block Types Available
+
+1. **text** - Markdown-formatted explanatory text
+2. **book_card** - Compact book display for lists
+3. **book_spotlight** - Featured single book with extended details
+4. **book_list** - Collection of related books
+5. **image** - Standalone images
+
 ## Pattern 1: Alternating Text and Book Cards
 
 **User Query**: "Show me some mystery books with detailed explanations"
@@ -214,6 +222,134 @@ This document shows various patterns for mixing text and book blocks in response
       "type": "text",
       "content": {
         "markdown": "Yes! You're thinking of 'The Martian' by Andy Weir. It follows Mark Watney, an astronaut stranded on Mars who must use his wit and engineering skills to survive until rescue."
+      }
+    }
+  ]
+}
+```
+
+## Pattern 5: Book Spotlight for Deep Dives
+
+**User Query**: "Tell me everything about Dune by Frank Herbert"
+
+**Response Structure**:
+```json
+{
+  "blocks": [
+    {
+      "type": "text",
+      "content": {
+        "markdown": "## Dune: A Science Fiction Masterpiece\n\nLet me share why this book is considered one of the greatest science fiction novels ever written:"
+      }
+    },
+    {
+      "type": "book_spotlight",
+      "content": {
+        "isbn": "978-0-441-17271-9",
+        "title": "Dune",
+        "author": "Frank Herbert",
+        "rating": 4.7,
+        "genres": ["Science Fiction", "Epic", "Political"],
+        "price": 18.99,
+        "image_url": "https://...",
+        "description": "A science fiction masterpiece about politics, religion, and ecology",
+        "extended_description": "Set in the distant future amidst a feudal interstellar society, Dune tells the story of young Paul Atreides, whose family accepts the stewardship of the planet Arrakis. The story explores the complex interactions of politics, religion, ecology, technology, and human emotion, as the factions of the empire confront each other for control of Arrakis and its 'spice'.",
+        "key_themes": [
+          "Power and politics",
+          "Ecology and environment",
+          "Religion and mysticism",
+          "Human potential and evolution",
+          "The dangers of messianic leadership"
+        ],
+        "why_recommended": "Dune is not just a novel, it's a complete universe. Herbert created one of the most detailed and believable future societies in all of science fiction. The book works on multiple levels - as an adventure story, a political thriller, an ecological parable, and a philosophical meditation on power and human nature.",
+        "similar_books": [
+          "Foundation by Isaac Asimov",
+          "The Left Hand of Darkness by Ursula K. Le Guin",
+          "Hyperion by Dan Simmons",
+          "The Book of the New Sun by Gene Wolfe"
+        ]
+      }
+    },
+    {
+      "type": "text",
+      "content": {
+        "markdown": "### Reading Tips\n\n- Don't be intimidated by the terminology - there's a glossary at the back\n- Pay attention to the chapter epigraphs - they provide context\n- The first 100 pages are setup - the payoff is worth it\n\nWould you like to know about the sequels or explore similar epic science fiction?"
+      }
+    }
+  ]
+}
+```
+
+## Pattern 6: Comparison with Multiple Spotlights
+
+**User Query**: "Compare 1984 and Brave New World in detail"
+
+**Response Structure**:
+```json
+{
+  "blocks": [
+    {
+      "type": "text",
+      "content": {
+        "markdown": "## Two Visions of Dystopia\n\nBoth novels present terrifying visions of the future, but their approaches couldn't be more different:"
+      }
+    },
+    {
+      "type": "book_spotlight",
+      "content": {
+        "isbn": "978-0-452-28423-4",
+        "title": "1984",
+        "author": "George Orwell",
+        "rating": 4.6,
+        "genres": ["Dystopian", "Political Fiction", "Classic"],
+        "price": 15.99,
+        "image_url": "https://...",
+        "description": "A totalitarian nightmare of surveillance and thought control",
+        "extended_description": "Winston Smith lives in a world of perpetual war, omnipresent surveillance, and public manipulation. The Party controls everything - even the truth. Winston's rebellion begins with a diary and a love affair, both crimes punishable by death.",
+        "key_themes": [
+          "Totalitarian control",
+          "Language as thought control",
+          "The malleability of truth",
+          "Individual vs. state",
+          "The destruction of privacy"
+        ],
+        "why_recommended": "Orwell's vision has proven prophetic in many ways. Terms like 'Big Brother', 'thoughtcrime', and 'doublethink' have entered our language because they describe real phenomena. Essential reading for understanding modern surveillance states and information warfare.",
+        "similar_books": ["Animal Farm", "Fahrenheit 451", "The Handmaid's Tale"]
+      }
+    },
+    {
+      "type": "text",
+      "content": {
+        "markdown": "### The Iron Fist Approach\nOrwell shows control through fear, pain, and oppression. Now contrast this with Huxley's vision:"
+      }
+    },
+    {
+      "type": "book_spotlight",
+      "content": {
+        "isbn": "978-0-06-085052-4",
+        "title": "Brave New World",
+        "author": "Aldous Huxley",
+        "rating": 4.5,
+        "genres": ["Dystopian", "Science Fiction", "Classic"],
+        "price": 16.99,
+        "image_url": "https://...",
+        "description": "A dystopia of pleasure, conditioning, and engineered happiness",
+        "extended_description": "In the World State, everyone is happy - because they're genetically engineered and conditioned to be. Bernard Marx feels something is wrong with a world where people take soma to escape any discomfort and where 'everyone belongs to everyone else'.",
+        "key_themes": [
+          "Pleasure as control",
+          "Technology and dehumanization",
+          "The price of stability",
+          "Individuality vs. happiness",
+          "Consumer culture critique"
+        ],
+        "why_recommended": "Huxley's vision is arguably more relevant today than Orwell's. We're not controlled by pain but by pleasure - endless entertainment, social media dopamine hits, and consumer culture. A chilling look at how we might surrender freedom for comfort.",
+        "similar_books": ["Island (Huxley)", "We by Yevgeny Zamyatin", "The Giver"]
+      }
+    },
+    {
+      "type": "text",
+      "content": {
+        "markdown": "### The Velvet Glove Approach\n\n**Key Differences:**\n- **Control Method**: Orwell uses fear; Huxley uses pleasure\n- **Knowledge**: In 1984, information is restricted; in Brave New World, it's irrelevant\n- **Love**: Forbidden in 1984; meaningless in Brave New World\n- **Rebellion**: Crushed in 1984; impossible to conceive in Brave New World\n\nWhich vision do you find more frightening? Which seems more like our world today?"
       }
     }
   ]
