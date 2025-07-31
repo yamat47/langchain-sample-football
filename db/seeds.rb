@@ -23,38 +23,38 @@ books_data = [
   { title: "The Catcher in the Rye", author: "J.D. Salinger", genre: "Fiction", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1398034300i/5107.jpg" },
   
   # Mystery & Thriller
-  { title: "The Girl with the Dragon Tattoo", author: "Stieg Larsson", genre: "Mystery" },
-  { title: "Gone Girl", author: "Gillian Flynn", genre: "Thriller" },
-  { title: "The Da Vinci Code", author: "Dan Brown", genre: "Mystery" },
-  { title: "And Then There Were None", author: "Agatha Christie", genre: "Mystery" },
-  { title: "The Silent Patient", author: "Alex Michaelides", genre: "Thriller" },
-  { title: "Big Little Lies", author: "Liane Moriarty", genre: "Mystery" },
+  { title: "The Girl with the Dragon Tattoo", author: "Stieg Larsson", genre: "Mystery", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1684638853i/2429135.jpg" },
+  { title: "Gone Girl", author: "Gillian Flynn", genre: "Thriller", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1554086139i/19288043.jpg" },
+  { title: "The Da Vinci Code", author: "Dan Brown", genre: "Mystery", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1579621267i/968.jpg" },
+  { title: "And Then There Were None", author: "Agatha Christie", genre: "Mystery", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1638425885i/16299.jpg" },
+  { title: "The Silent Patient", author: "Alex Michaelides", genre: "Thriller", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1668782119i/40097951.jpg" },
+  { title: "Big Little Lies", author: "Liane Moriarty", genre: "Mystery", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1601552234i/19486412.jpg" },
   
   # Science Fiction & Fantasy
-  { title: "The Three-Body Problem", author: "Liu Cixin", genre: "Science Fiction" },
-  { title: "Project Hail Mary", author: "Andy Weir", genre: "Science Fiction" },
-  { title: "Dune", author: "Frank Herbert", genre: "Science Fiction" },
-  { title: "The Lord of the Rings", author: "J.R.R. Tolkien", genre: "Fantasy" },
-  { title: "Harry Potter and the Sorcerer's Stone", author: "J.K. Rowling", genre: "Fantasy" },
-  { title: "The Hobbit", author: "J.R.R. Tolkien", genre: "Fantasy" },
+  { title: "The Three-Body Problem", author: "Liu Cixin", genre: "Science Fiction", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1415428227i/20518872.jpg" },
+  { title: "Project Hail Mary", author: "Andy Weir", genre: "Science Fiction", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1597695864i/54493401.jpg" },
+  { title: "Dune", author: "Frank Herbert", genre: "Science Fiction", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1555447414i/44767458.jpg" },
+  { title: "The Lord of the Rings", author: "J.R.R. Tolkien", genre: "Fantasy", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1566425108i/33.jpg" },
+  { title: "Harry Potter and the Sorcerer's Stone", author: "J.K. Rowling", genre: "Fantasy", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1598823299i/42844155.jpg" },
+  { title: "The Hobbit", author: "J.R.R. Tolkien", genre: "Fantasy", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1546071216i/5907.jpg" },
   
   # Business & Self-Help
-  { title: "Atomic Habits", author: "James Clear", genre: "Self-Help" },
-  { title: "The 7 Habits of Highly Effective People", author: "Stephen R. Covey", genre: "Self-Help" },
-  { title: "Thinking, Fast and Slow", author: "Daniel Kahneman", genre: "Psychology" },
-  { title: "How to Win Friends and Influence People", author: "Dale Carnegie", genre: "Self-Help" },
-  { title: "The Lean Startup", author: "Eric Ries", genre: "Business" },
+  { title: "Atomic Habits", author: "James Clear", genre: "Self-Help", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1655988385i/40121378.jpg" },
+  { title: "The 7 Habits of Highly Effective People", author: "Stephen R. Covey", genre: "Self-Help", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1421842784i/36072.jpg" },
+  { title: "Thinking, Fast and Slow", author: "Daniel Kahneman", genre: "Psychology", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1317793965i/11468377.jpg" },
+  { title: "How to Win Friends and Influence People", author: "Dale Carnegie", genre: "Self-Help", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1442726934i/4865.jpg" },
+  { title: "The Lean Startup", author: "Eric Ries", genre: "Business", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1629999184i/10127019.jpg" },
   
   # Non-Fiction
-  { title: "Sapiens: A Brief History of Humankind", author: "Yuval Noah Harari", genre: "History" },
-  { title: "Educated", author: "Tara Westover", genre: "Memoir" },
-  { title: "Becoming", author: "Michelle Obama", genre: "Memoir" },
-  { title: "Factfulness", author: "Hans Rosling", genre: "Science" },
+  { title: "Sapiens: A Brief History of Humankind", author: "Yuval Noah Harari", genre: "History", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1595674533i/23692271.jpg" },
+  { title: "Educated", author: "Tara Westover", genre: "Memoir", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1506026635i/35133922.jpg" },
+  { title: "Becoming", author: "Michelle Obama", genre: "Memoir", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1528206996i/38746485.jpg" },
+  { title: "Factfulness", author: "Hans Rosling", genre: "Science", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1544963815i/34890015.jpg" },
   
   # Biography & Essays
-  { title: "Steve Jobs", author: "Walter Isaacson", genre: "Biography" },
-  { title: "When Breath Becomes Air", author: "Paul Kalanithi", genre: "Memoir" },
-  { title: "The Art of War", author: "Sun Tzu", genre: "Philosophy" }
+  { title: "Steve Jobs", author: "Walter Isaacson", genre: "Biography", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1511288482i/11084145.jpg" },
+  { title: "When Breath Becomes Air", author: "Paul Kalanithi", genre: "Memoir", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1492677644i/25899336.jpg" },
+  { title: "The Art of War", author: "Sun Tzu", genre: "Philosophy", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1630683326i/10534.jpg" }
 ]
 
 # Review text variations
@@ -155,7 +155,7 @@ books_data.each_with_index do |book_data, index|
     b.author = book_data[:author]
     b.genres = [book_data[:genre]]
     b.isbn = "978-#{1000000000 + index}"  # Generate deterministic ISBN
-    b.image_url = book_data[:image_url] || "https://via.placeholder.com/128x192?text=#{CGI.escape(book_data[:title])}"
+    b.image_url = book_data[:image_url]
     b.thumbnail_url = book_data[:thumbnail_url] || book_data[:image_url]&.gsub(/\.jpg$/, '_thumb.jpg')
     b.description = "A compelling #{book_data[:genre].downcase} novel by #{book_data[:author]}."
     b.price = 15.99 + (index % 20)  # Price between 15.99 and 35.99
