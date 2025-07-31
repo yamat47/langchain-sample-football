@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_31_003223) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_31_044038) do
   create_table "book_queries", force: :cascade do |t|
     t.text "query_text", null: false
     t.text "response_text"
@@ -19,6 +19,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_31_003223) do
     t.integer "response_time_ms"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.text "full_response"
     t.index ["created_at"], name: "index_book_queries_on_created_at"
   end
 
