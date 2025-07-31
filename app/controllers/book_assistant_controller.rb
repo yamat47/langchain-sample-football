@@ -25,7 +25,7 @@ class BookAssistantController < ApplicationController
   def identify
     if request.get?
       # Show the identify form
-      render 'identify'
+      render "identify"
     else
       # Handle POST request
       @user = UserService.find_or_create_by_identifier(params[:identifier])
@@ -80,7 +80,6 @@ class BookAssistantController < ApplicationController
       persistence_service = ChatPersistenceService.new(anonymous_user)
       @chat_session = persistence_service.create_session
       session[:anonymous_chat_session_id] = @chat_session.id
-
 
       respond_to do |format|
         format.turbo_stream do
@@ -150,7 +149,17 @@ class BookAssistantController < ApplicationController
     @response = assistant_service.process_query(params[:message])
 
     # Save assistant response
-    @persistence_service.add_message(@chat_session.id, "assistant", @response[:message]) if @response[:success]
+    if @response[:success]
+      # For blocks response, extract text content or use a fallback
+      message_content = if @response[:blocks].present?
+                          text_content = BookRecommendationParser.extract_text_content(@response[:blocks])
+                          text_content.presence || "I've found some book recommendations for you."
+                        else
+                          @response[:message]
+                        end
+      
+      @persistence_service.add_message(@chat_session.id, "assistant", message_content)
+    end
 
     respond_to do |format|
       format.turbo_stream do

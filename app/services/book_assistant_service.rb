@@ -17,31 +17,12 @@ class BookAssistantService
       @messages << { role: "user", content: message }
       limit_message_history!
 
-      # Add message and run the assistant
-      messages = @assistant.add_message_and_run(
-        content: message,
-        auto_tool_execution: true
-      )
-
-      # Get the last message which contains the response
-      response = messages.last
-
-      # Add assistant response to conversation history
-      @messages << { role: "assistant", content: response.content }
-
-      # Calculate response time
-      response_time_ms = ((Time.current - start_time) * 1000).round
-
-      # Log the query
-      BookQuery.log_query(
-        message,
-        response.content,
-        true,
-        response_time_ms
-      )
-
-      # Return response with updated messages
-      format_response(response).merge(messages: @messages)
+      # Detect if this is a book-related query
+      if book_related_query?(message)
+        process_with_blocks(message, start_time)
+      else
+        process_standard(message, start_time)
+      end
     rescue StandardError => e
       handle_error(e, message, start_time)
     end
@@ -52,6 +33,103 @@ class BookAssistantService
   end
 
   private
+
+  def book_related_query?(message)
+    book_keywords = [
+      "book", "books", "novel", "novels", "read", "reading", "recommend", "recommendation", "author", "writer", "literature", "fiction", "non-fiction", "nonfiction", "mystery", "thriller", "romance", "fantasy", "sci-fi", "science fiction", "biography", "memoir", "history", "bestseller", "genre", "story", "stories", "harry potter", "stephen king"
+    ]
+
+    message_lower = message.downcase
+    book_keywords.any? { |keyword| message_lower.include?(keyword) }
+  end
+
+  def process_with_blocks(message, start_time)
+    # Create parser for structured output
+    parser = BookRecommendationParser.create_parser
+
+    # Build assistant with enhanced instructions
+    assistant = build_assistant_with_blocks_instructions
+
+    # Get response
+    messages = assistant.add_message_and_run(
+      content: message,
+      auto_tool_execution: true
+    )
+
+    response = messages.last
+
+    # Try to parse as structured response
+    begin
+      structured_response = parser.parse(response.content)
+      @messages << { role: "assistant", content: response.content }
+
+      response_time_ms = ((Time.current - start_time) * 1000).round
+
+      # Log the query
+      blocks = structured_response["blocks"] || structured_response[:blocks]
+      text_content = BookRecommendationParser.extract_text_content(blocks)
+      # Ensure we always have some content for the message
+      text_content = "I've found some book recommendations for you." if text_content.blank?
+      
+      BookQuery.log_query(message, text_content, true, response_time_ms)
+
+      # Return formatted response with blocks
+      {
+        message: text_content,
+        blocks: structured_response["blocks"] || structured_response[:blocks],
+        success: true,
+        timestamp: Time.current,
+        tools_used: extract_tools_used(response),
+        messages: @messages
+      }
+    rescue Langchain::OutputParsers::OutputParserException => e
+      Rails.logger.warn "Failed to parse structured response, falling back to text: #{e.message}"
+      # Fall back to standard processing
+      @messages.pop # Remove the user message we added
+      process_standard(message, start_time)
+    end
+  end
+
+  def process_standard(message, start_time)
+    # Standard processing (existing logic)
+    messages = @assistant.add_message_and_run(
+      content: message,
+      auto_tool_execution: true
+    )
+
+    response = messages.last
+    @messages << { role: "assistant", content: response.content }
+
+    response_time_ms = ((Time.current - start_time) * 1000).round
+
+    BookQuery.log_query(
+      message,
+      response.content,
+      true,
+      response_time_ms
+    )
+
+    format_response(response).merge(messages: @messages)
+  end
+
+  def build_assistant_with_blocks_instructions
+    Langchain::Assistant.new(
+      llm: llm_client,
+      instructions: assistant_instructions_with_blocks,
+      tools: available_tools
+    )
+  end
+
+  def assistant_instructions_with_blocks
+    base_instructions = assistant_instructions
+    format_instructions = BookRecommendationParser.format_instructions
+
+    <<~INSTRUCTIONS
+      #{base_instructions}
+
+      #{format_instructions}
+    INSTRUCTIONS
+  end
 
   def build_assistant_with_history
     assistant = build_assistant

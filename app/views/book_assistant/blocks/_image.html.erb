@@ -1,0 +1,12 @@
+<div class="image-block">
+  <% if block["url"].present? %>
+    <%= image_tag block["url"], 
+                  alt: block["alt"] || "Image",
+                  loading: "lazy" %>
+    <% if block["caption"].present? %>
+      <p class="caption">
+        <%= block["caption"] %>
+      </p>
+    <% end %>
+  <% end %>
+</div>

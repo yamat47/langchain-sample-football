@@ -68,7 +68,8 @@ class Book < ApplicationRecord
       rating: rating,
       review_count: review_count,
       price: price,
-      published_at: published_at&.strftime("%Y-%m-%d")
+      published_at: published_at&.strftime("%Y-%m-%d"),
+      image_url: image_url
     }
   end
 
@@ -79,6 +80,7 @@ class Book < ApplicationRecord
       page_count: page_count,
       language: language,
       availability_status: availability_status,
+      thumbnail_url: thumbnail_url,
       similar_books_count: similar_books.count,
       reviews: reviews.limit(3).map do |r|
         { rating: r.rating, content: r.content }

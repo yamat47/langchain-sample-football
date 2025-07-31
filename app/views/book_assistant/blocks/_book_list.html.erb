@@ -1,0 +1,13 @@
+<div class="book-list">
+  <% if block["title"].present? %>
+    <h3><%= block["title"] %></h3>
+  <% end %>
+  
+  <div class="book-list-items">
+    <% if block["books"].present? %>
+      <% block["books"].each do |book| %>
+        <%= render 'book_assistant/blocks/book_card', block: book %>
+      <% end %>
+    <% end %>
+  </div>
+</div>

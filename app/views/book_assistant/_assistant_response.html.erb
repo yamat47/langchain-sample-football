@@ -13,7 +13,14 @@
   </div>
   <div style="background: #e8f5e9; padding: 15px; border-radius: 8px; border: 1px solid #c8e6c9;">
     <% if response[:success] %>
-      <%= simple_format(response[:message]) %>
+      <% if response[:blocks].present? %>
+        <% response[:blocks].each do |block| %>
+          <%= render "book_assistant/blocks/#{block['type']}", block: block["content"] %>
+        <% end %>
+      <% else %>
+        <!-- Fallback to simple text -->
+        <%= simple_format(response[:message]) %>
+      <% end %>
       <% if response[:tools_used].present? %>
         <small style="color: #666; display: block; margin-top: 10px;">
           Tools used: <%= response[:tools_used].join(", ") %>

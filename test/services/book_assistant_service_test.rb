@@ -2,6 +2,15 @@ require "test_helper"
 require "minitest/mock"
 
 class BookAssistantServiceTest < ActiveSupport::TestCase
+  class MockMessage
+    attr_accessor :content, :role
+
+    def initialize(content, role = "assistant")
+      @content = content
+      @role = role
+    end
+  end
+
   def setup
     # Mock the OpenAI API key to avoid actual API calls
     ENV["OPENAI_API_KEY"] = "test-api-key"
@@ -308,5 +317,127 @@ class BookAssistantServiceTest < ActiveSupport::TestCase
     assert_equal 20, service.instance_variable_get(:@messages).length
     # First message should be from question 15 (30 messages removed)
     assert_equal "Question 15", service.instance_variable_get(:@messages).first[:content]
+  end
+
+  test "should detect book-related queries" do
+    service = BookAssistantService.new
+
+    # Book-related queries
+    assert service.send(:book_related_query?, "Can you recommend some books?")
+    assert service.send(:book_related_query?, "What are the best mystery novels?")
+    assert service.send(:book_related_query?, "Tell me about Harry Potter")
+    assert service.send(:book_related_query?, "I'm looking for science fiction books")
+    assert service.send(:book_related_query?, "Show me books by Stephen King")
+
+    # Non-book queries
+    assert_not service.send(:book_related_query?, "What's the weather today?")
+    assert_not service.send(:book_related_query?, "How are you?")
+    assert_not service.send(:book_related_query?, "Tell me a joke")
+  end
+
+  test "should process book queries with blocks format" do
+    service = BookAssistantService.new
+
+    # Create test books
+    Book.create!(
+      isbn: "978-0-12345-678-9",
+      title: "Test Book 1",
+      author: "Test Author",
+      genres: ["Fiction"],
+      rating: 4.5,
+      price: 19.99,
+      image_url: "https://example.com/book1.jpg"
+    )
+
+    # Mock the assistant for blocks processing
+    mock_blocks_assistant = Minitest::Mock.new
+    def mock_blocks_assistant.add_message_and_run(content:, auto_tool_execution: true)
+      # Return a mock message with structured content
+      [BookAssistantServiceTest::MockMessage.new('{"blocks":[{"type":"text","content":{"markdown":"Here are some book recommendations:"}},{"type":"book_card","content":{"isbn":"978-0-12345-678-9","title":"Test Book 1","author":"Test Author","rating":4.5,"genres":["Fiction"],"price":19.99,"image_url":"https://example.com/book1.jpg"}}]}')]
+    end
+
+    # Stub the method that creates the blocks assistant
+    service.stub :build_assistant_with_blocks_instructions, mock_blocks_assistant do
+      result = service.process_query("Recommend me some books")
+
+      assert result[:success], "Query should succeed"
+      assert_not_nil result[:blocks], "Blocks should not be nil"
+      assert_equal 2, result[:blocks].size
+      assert_equal "text", result[:blocks][0]["type"]
+      assert_equal "book_card", result[:blocks][1]["type"]
+      assert_equal "Test Book 1", result[:blocks][1]["content"]["title"]
+    end
+  end
+
+  test "should fall back to text-only response when parsing fails" do
+    service = BookAssistantService.new
+
+    mock_assistant = Minitest::Mock.new
+    def mock_assistant.add_message_and_run(content:, auto_tool_execution: true)
+      # Return invalid JSON to trigger fallback
+      [BookAssistantServiceTest::MockMessage.new("This is a plain text response about books")]
+    end
+
+    service.instance_variable_set(:@assistant, mock_assistant)
+
+    result = service.process_query("Tell me about books")
+
+    assert result[:success]
+    assert_nil result[:blocks]
+    assert_equal "This is a plain text response about books", result[:message]
+  end
+
+  test "should handle mixed content responses" do
+    service = BookAssistantService.new
+
+    # Mock the assistant for blocks processing
+    mock_blocks_assistant = Minitest::Mock.new
+    def mock_blocks_assistant.add_message_and_run(content:, auto_tool_execution: true)
+      [BookAssistantServiceTest::MockMessage.new('{"blocks":[{"type":"text","content":{"markdown":"I found these mystery books for you:"}},{"type":"book_list","content":{"title":"Top Mystery Novels","books":[{"isbn":"978-1111111111","title":"Mystery Book 1","author":"Author 1","rating":4.2,"genres":["Mystery"],"image_url":"https://example.com/mystery1.jpg"},{"isbn":"978-2222222222","title":"Mystery Book 2","author":"Author 2","rating":4.7,"genres":["Mystery","Thriller"],"image_url":"https://example.com/mystery2.jpg"}]}},{"type":"text","content":{"markdown":"Would you like more recommendations?"}}]}')]
+    end
+
+    # Stub the method that creates the blocks assistant
+    service.stub :build_assistant_with_blocks_instructions, mock_blocks_assistant do
+      result = service.process_query("Show me mystery books")
+
+      assert result[:success]
+      assert_not_nil result[:blocks]
+      assert_equal 3, result[:blocks].size
+
+      # Check first text block
+      assert_equal "text", result[:blocks][0]["type"]
+      assert_match(/mystery books/, result[:blocks][0]["content"]["markdown"])
+
+      # Check book list block
+      assert_equal "book_list", result[:blocks][1]["type"]
+      assert_equal "Top Mystery Novels", result[:blocks][1]["content"]["title"]
+      assert_equal 2, result[:blocks][1]["content"]["books"].size
+
+      # Check final text block
+      assert_equal "text", result[:blocks][2]["type"]
+      assert_match(/more recommendations/, result[:blocks][2]["content"]["markdown"])
+    end
+  end
+
+  test "should handle blocks response without text content" do
+    service = BookAssistantService.new
+
+    # Mock the assistant for blocks processing with no text blocks
+    mock_blocks_assistant = Minitest::Mock.new
+    def mock_blocks_assistant.add_message_and_run(content:, auto_tool_execution: true)
+      [BookAssistantServiceTest::MockMessage.new('{"blocks":[{"type":"book_card","content":{"isbn":"978-0-12345-678-9","title":"Test Book","author":"Test Author","rating":4.5}}]}')]
+    end
+
+    # Stub the method that creates the blocks assistant
+    service.stub :build_assistant_with_blocks_instructions, mock_blocks_assistant do
+      result = service.process_query("Show me a book")
+
+      assert result[:success]
+      assert_not_nil result[:blocks]
+      assert_equal 1, result[:blocks].size
+      assert_equal "book_card", result[:blocks][0]["type"]
+      # Should have a default message when no text content
+      assert_equal "I've found some book recommendations for you.", result[:message]
+    end
   end
 end

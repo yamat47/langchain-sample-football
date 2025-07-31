@@ -244,4 +244,53 @@ class BookTest < ActiveSupport::TestCase
 
     assert_nil @book.reload.genres
   end
+
+  test "should allow image_url to be set" do
+    @book.image_url = "https://example.com/book-cover.jpg"
+    @book.save!
+
+    assert_equal "https://example.com/book-cover.jpg", @book.reload.image_url
+  end
+
+  test "should allow thumbnail_url to be set" do
+    @book.thumbnail_url = "https://example.com/book-thumb.jpg"
+    @book.save!
+
+    assert_equal "https://example.com/book-thumb.jpg", @book.reload.thumbnail_url
+  end
+
+  test "should allow nil image URLs" do
+    @book.image_url = nil
+    @book.thumbnail_url = nil
+
+    assert_predicate @book, :valid?
+    @book.save!
+
+    assert_nil @book.reload.image_url
+    assert_nil @book.reload.thumbnail_url
+  end
+
+  test "to_api_response should include image_url when present" do
+    @book.image_url = "https://example.com/cover.jpg"
+    @book.thumbnail_url = "https://example.com/thumb.jpg"
+    @book.save!
+
+    response = @book.to_api_response
+
+    assert_includes response.keys, :image_url
+    assert_equal "https://example.com/cover.jpg", response[:image_url]
+  end
+
+  test "to_detailed_api_response should include both image URLs" do
+    @book.image_url = "https://example.com/cover.jpg"
+    @book.thumbnail_url = "https://example.com/thumb.jpg"
+    @book.save!
+
+    response = @book.to_detailed_api_response
+
+    assert_includes response.keys, :image_url
+    assert_includes response.keys, :thumbnail_url
+    assert_equal "https://example.com/cover.jpg", response[:image_url]
+    assert_equal "https://example.com/thumb.jpg", response[:thumbnail_url]
+  end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_07_29_044020) do
+ActiveRecord::Schema[8.0].define(version: 2025_07_31_003223) do
   create_table "book_queries", force: :cascade do |t|
     t.text "query_text", null: false
     t.text "response_text"
@@ -50,6 +50,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_07_29_044020) do
     t.integer "trending_score", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "image_url"
+    t.string "thumbnail_url"
     t.index ["author"], name: "index_books_on_author"
     t.index ["is_trending", "trending_score"], name: "index_books_on_is_trending_and_trending_score"
     t.index ["isbn"], name: "index_books_on_isbn", unique: true

@@ -8,17 +8,19 @@
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
 
+require "cgi"
+
 # Book data
 books_data = [
   # Fiction & Literature
-  { title: "Norwegian Wood", author: "Haruki Murakami", genre: "Fiction" },
-  { title: "1Q84", author: "Haruki Murakami", genre: "Fiction" },
-  { title: "Kafka on the Shore", author: "Haruki Murakami", genre: "Fiction" },
-  { title: "The Great Gatsby", author: "F. Scott Fitzgerald", genre: "Classic" },
-  { title: "To Kill a Mockingbird", author: "Harper Lee", genre: "Classic" },
-  { title: "1984", author: "George Orwell", genre: "Dystopian" },
-  { title: "Pride and Prejudice", author: "Jane Austen", genre: "Romance" },
-  { title: "The Catcher in the Rye", author: "J.D. Salinger", genre: "Fiction" },
+  { title: "Norwegian Wood", author: "Haruki Murakami", genre: "Fiction", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1630460042i/11297.jpg" },
+  { title: "1Q84", author: "Haruki Murakami", genre: "Fiction", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1483103331i/10357575.jpg" },
+  { title: "Kafka on the Shore", author: "Haruki Murakami", genre: "Fiction", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1429638085i/4929.jpg" },
+  { title: "The Great Gatsby", author: "F. Scott Fitzgerald", genre: "Classic", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1490528560i/4671.jpg" },
+  { title: "To Kill a Mockingbird", author: "Harper Lee", genre: "Classic", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1553383690i/2657.jpg" },
+  { title: "1984", author: "George Orwell", genre: "Dystopian", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1657781256i/61439040.jpg" },
+  { title: "Pride and Prejudice", author: "Jane Austen", genre: "Romance", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1320399351i/1885.jpg" },
+  { title: "The Catcher in the Rye", author: "J.D. Salinger", genre: "Fiction", image_url: "https://images-na.ssl-images-amazon.com/images/S/compressed.photo.goodreads.com/books/1398034300i/5107.jpg" },
   
   # Mystery & Thriller
   { title: "The Girl with the Dragon Tattoo", author: "Stieg Larsson", genre: "Mystery" },
@@ -153,6 +155,13 @@ books_data.each_with_index do |book_data, index|
     b.author = book_data[:author]
     b.genres = [book_data[:genre]]
     b.isbn = "978-#{1000000000 + index}"  # Generate deterministic ISBN
+    b.image_url = book_data[:image_url] || "https://via.placeholder.com/128x192?text=#{CGI.escape(book_data[:title])}"
+    b.thumbnail_url = book_data[:thumbnail_url] || book_data[:image_url]&.gsub(/\.jpg$/, '_thumb.jpg')
+    b.description = "A compelling #{book_data[:genre].downcase} novel by #{book_data[:author]}."
+    b.price = 15.99 + (index % 20)  # Price between 15.99 and 35.99
+    b.page_count = 200 + (index * 13 % 400)  # Page count between 200-600
+    b.published_at = Date.today - (index * 30).days  # Stagger publication dates
+    b.rating = 3.5 + (index % 3) * 0.5  # Rating between 3.5 and 5.0
   end
   
   # Add deterministic reviews for each book

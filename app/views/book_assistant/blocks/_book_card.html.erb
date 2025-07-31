@@ -1,0 +1,59 @@
+<div class="book-card">
+  <div class="book-card-image">
+    <% if block["image_url"].present? %>
+      <%= image_tag block["image_url"], 
+                    alt: block["title"],
+                    loading: "lazy" %>
+    <% else %>
+      <div class="no-cover">
+        No cover
+      </div>
+    <% end %>
+  </div>
+  <div class="book-card-content">
+    <h3><%= block["title"] %></h3>
+    <p class="author">by <%= block["author"] %></p>
+    
+    <% if block["rating"].present? %>
+      <div class="rating">
+        <div class="stars">
+          <% full_stars = block["rating"].to_i %>
+          <% half_star = (block["rating"] - full_stars) >= 0.5 %>
+          <% empty_stars = 5 - full_stars - (half_star ? 1 : 0) %>
+          
+          <% full_stars.times do %>★<% end %>
+          <% if half_star %>☆<% end %>
+          <% empty_stars.times do %>☆<% end %>
+        </div>
+        <span class="rating-text">
+          <%= block["rating"] %>/5
+          <% if block["review_count"].present? && block["review_count"] > 0 %>
+            (<%= block["review_count"] %> reviews)
+          <% end %>
+        </span>
+      </div>
+    <% end %>
+    
+    <% if block["genres"].present? && block["genres"].any? %>
+      <div class="genres">
+        <% block["genres"].each do |genre| %>
+          <span class="genre-tag">
+            <%= genre %>
+          </span>
+        <% end %>
+      </div>
+    <% end %>
+    
+    <% if block["price"].present? %>
+      <p class="price">
+        $<%= number_with_precision(block["price"], precision: 2) %>
+      </p>
+    <% end %>
+    
+    <% if block["description"].present? %>
+      <p class="description">
+        <%= truncate(block["description"], length: 150) %>
+      </p>
+    <% end %>
+  </div>
+</div>
