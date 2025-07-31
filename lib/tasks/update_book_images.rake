@@ -32,14 +32,14 @@ namespace :books do
     }
 
     updated_count = 0
-    
+
     Book.find_each do |book|
       # Update if book has placeholder image or no image
       if book.image_url.nil? || book.image_url.include?("via.placeholder.com")
         if new_image_url = image_updates[book.title]
           book.update!(
             image_url: new_image_url,
-            thumbnail_url: new_image_url.gsub(/\.jpg$/, '_thumb.jpg')
+            thumbnail_url: new_image_url.gsub(/\.jpg$/, "_thumb.jpg")
           )
           updated_count += 1
           puts "Updated: #{book.title}"
@@ -48,7 +48,7 @@ namespace :books do
         end
       end
     end
-    
+
     puts "\nUpdated #{updated_count} books with real cover images."
   end
 end
