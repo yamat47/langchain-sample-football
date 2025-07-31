@@ -44,16 +44,34 @@ class BookRecommendationParser
         Each block represents a distinct piece of content.
 
         Block types:
-        - text: For explanatory text, use markdown formatting
-        - book_card: For individual book recommendations
-        - book_list: For multiple related books
+        - text: For explanatory text, use markdown formatting (can contain explanations, context, or any narrative)
+        - book_card: For individual book recommendations with detailed information
+        - book_list: For multiple related books grouped together
         - image: For standalone images
 
-        Rules:
-        1. Start with a text block explaining what you're showing
+        Flexible block composition:
+        - You can mix and match blocks in any order that makes sense for the response
+        - Multiple text blocks can be interspersed between book blocks
+        - Example patterns:
+          * text → book_card → text → book_card → text
+          * text → book_list → text
+          * text → book_card → text → book_list → text
+          * book_card → text → book_card
+        
+        Guidelines:
+        1. Use text blocks liberally to provide context, explanations, and transitions
         2. Use book_card for detailed individual recommendations
-        3. Use book_list when showing multiple options
-        4. End with a text block if additional context needed
+        3. Use book_list when showing multiple related options
+        4. Structure your response naturally - add text blocks wherever explanation is helpful
+
+        Example structure:
+        [
+          {"type": "text", "content": {"markdown": "Based on your interest in mystery novels, I have some recommendations:"}},
+          {"type": "book_card", "content": {book details}},
+          {"type": "text", "content": {"markdown": "If you enjoy psychological thrillers, you might also like:"}},
+          {"type": "book_list", "content": {list of books}},
+          {"type": "text", "content": {"markdown": "These books share similar themes of suspense and unexpected twists."}}
+        ]
 
         #{parser.get_format_instructions}
       INSTRUCTIONS
