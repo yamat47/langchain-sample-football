@@ -41,19 +41,33 @@ class BookRecommendationParser
       parser = create_parser
       <<~INSTRUCTIONS
         IMPORTANT: You MUST respond with ONLY a JSON object. Do not include any text before or after the JSON.
-        
+        DO NOT include any explanatory text before the JSON object.
+        DO NOT include any text after the JSON object.
+        ONLY output the JSON object starting with { and ending with }
+
+        CRITICAL RULES:
+        - ALWAYS respond with blocks, even for non-book queries
+        - Non-book queries → Use only text blocks
+        - "Show me [any genre] books" → ALWAYS use book_list
+        - "Recommend books" → ALWAYS use book_list
+        - Multiple books → ALWAYS use book_list
+        - Single specific book → Use book_spotlight
+
         The JSON object MUST contain a "blocks" array as the top-level property.
-        
+        Your response must start with { and end with } with no other text.
+
         Block types you MUST use:
         1. "text" blocks: For ALL explanatory text, context, greetings, and transitions
            - content MUST have a "markdown" property with your text
         2. "book_card" blocks: For compact book displays in lists or comparisons
            - content MUST include: isbn, title, author, rating, genres (array), price, image_url, description
+           - NOTE: description can be detailed (100-200 characters) when user asks for explanations
         3. "book_spotlight" blocks: For featuring a SINGLE book with extended description
-           - content MUST include: isbn, title, author, rating, genres (array), price, image_url, 
+           - content MUST include: isbn, title, author, rating, genres (array), price, image_url,#{' '}
              description, extended_description, key_themes (array), why_recommended, similar_books (array of titles)
         4. "book_list" blocks: For multiple related books shown together
            - content MUST have: title (string) and books (array of book_card objects)
+           - ALWAYS use book_list when showing 2 or more books, even with detailed explanations
 
         REQUIRED: Always include text blocks to make your response conversational:
         - Start with a text block to greet or acknowledge the user's request
@@ -61,10 +75,13 @@ class BookRecommendationParser
         - End with a text block to conclude or ask if they need more help
 
         Usage guidelines:
-        - Use "book_spotlight" when discussing ONE book in detail
-        - Use "book_card" for books in lists or brief mentions
-        - Use "book_list" when showing multiple options
-        
+        - Use "book_spotlight" when user asks for detailed information about ONE specific book
+        - Use "book_list" when recommending MULTIPLE books (3 or more)
+        - Use "book_card" only inside book_list blocks, never standalone
+        - IMPORTANT: For queries like "recommend books", "show me books", "what should I read" → use book_list
+        - IMPORTANT: "Show me [genre] books" or "books with detailed explanations" → use book_list
+        - The book_card within book_list can include detailed descriptions
+
         Example with book_spotlight:
         {
           "blocks": [
@@ -100,13 +117,71 @@ class BookRecommendationParser
           ]
         }
 
+        Example with book_list (including detailed explanations):
+        {
+          "blocks": [
+            {
+              "type": "text",
+              "content": {
+                "markdown": "Here are some great mystery novels with detailed explanations:"
+              }
+            },
+            {
+              "type": "book_list",
+              "content": {
+                "title": "Mystery Books with Detailed Explanations",
+                "books": [
+                  {
+                    "isbn": "978-0-00-752773-7",
+                    "title": "The Girl on the Train",
+                    "author": "Paula Hawkins",
+                    "rating": 4.0,
+                    "genres": ["Mystery", "Thriller"],
+                    "price": 14.99,
+                    "image_url": "https://example.com/book1.jpg",
+                    "description": "A gripping psychological thriller about obsession, memory, and the dangerous truths we hide from ourselves. Rachel's daily train commute becomes an obsession with a seemingly perfect couple, until one day everything changes."
+                  },
+                  {
+                    "isbn": "978-0-385-53978-1",
+                    "title": "Gone Girl",
+                    "author": "Gillian Flynn",
+                    "rating": 4.2,
+                    "genres": ["Mystery", "Thriller"],
+                    "price": 16.99,
+                    "image_url": "https://example.com/book2.jpg",
+                    "description": "A masterfully crafted psychological thriller that examines the dark side of marriage. When Amy disappears on her anniversary, her husband Nick becomes the prime suspect in a case that reveals shocking secrets."
+                  }
+                ]
+              }
+            },
+            {
+              "type": "text",
+              "content": {
+                "markdown": "Each of these books offers unique twists and psychological depth. Would you like more recommendations or additional details about any specific book?"
+              }
+            }
+          ]
+        }
+
+        Example for non-book queries:
+        {
+          "blocks": [
+            {
+              "type": "text",
+              "content": {
+                "markdown": "Hello! I'm your book recommendation assistant. I can help you discover amazing books, find similar titles to your favorites, and explore new genres. What kind of books are you interested in today?"
+              }
+            }
+          ]
+        }
+
         #{parser.get_format_instructions}
       INSTRUCTIONS
     end
 
     def extract_text_content(blocks)
       return "" if blocks.nil? || blocks.empty?
-      
+
       blocks
         .select { |block| block[:type] == "text" || block["type"] == "text" }
         .map { |block| block.dig(:content, :markdown) || block.dig("content", "markdown") }
@@ -140,7 +215,7 @@ class BookRecommendationParser
         }
       }
     end
-    
+
     def book_to_spotlight(book, extended_description: nil, key_themes: [], why_recommended: nil, similar_books: [])
       {
         type: "book_spotlight",
@@ -161,13 +236,13 @@ class BookRecommendationParser
         }
       }
     end
-    
+
     def generate_extended_description(book)
       # This would ideally come from the book's full description or AI-generated content
       "A detailed exploration of #{book.title} by #{book.author}, " \
-      "this #{book.genres&.first&.downcase || 'book'} takes readers on an unforgettable journey."
+        "this #{book.genres&.first&.downcase || 'book'} takes readers on an unforgettable journey."
     end
-    
+
     def extract_themes_from_book(book)
       # Default themes based on genre
       case book.genres&.first
@@ -183,13 +258,13 @@ class BookRecommendationParser
         ["Character development", "Engaging plot", "Thought-provoking themes"]
       end
     end
-    
+
     def generate_recommendation_reason(book)
       "With a #{book.rating} star rating and #{book.review_count || 'numerous'} positive reviews, " \
-      "#{book.title} stands out in the #{book.genres&.first || 'literary'} genre."
+        "#{book.title} stands out in the #{book.genres&.first || 'literary'} genre."
     end
-    
-    def find_similar_book_titles(book)
+
+    def find_similar_book_titles(_book)
       # In a real implementation, this would query for similar books
       # For now, return empty array to be filled by the AI
       []
