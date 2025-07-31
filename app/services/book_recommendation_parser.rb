@@ -40,38 +40,53 @@ class BookRecommendationParser
     def format_instructions
       parser = create_parser
       <<~INSTRUCTIONS
-        You MUST respond with a JSON object containing a "blocks" array.
-        Each block represents a distinct piece of content.
-
-        Block types:
-        - text: For explanatory text, use markdown formatting (can contain explanations, context, or any narrative)
-        - book_card: For individual book recommendations with detailed information
-        - book_list: For multiple related books grouped together
-        - image: For standalone images
-
-        Flexible block composition:
-        - You can mix and match blocks in any order that makes sense for the response
-        - Multiple text blocks can be interspersed between book blocks
-        - Example patterns:
-          * text → book_card → text → book_card → text
-          * text → book_list → text
-          * text → book_card → text → book_list → text
-          * book_card → text → book_card
+        IMPORTANT: You MUST respond with ONLY a JSON object. Do not include any text before or after the JSON.
         
-        Guidelines:
-        1. Use text blocks liberally to provide context, explanations, and transitions
-        2. Use book_card for detailed individual recommendations
-        3. Use book_list when showing multiple related options
-        4. Structure your response naturally - add text blocks wherever explanation is helpful
+        The JSON object MUST contain a "blocks" array as the top-level property.
+        
+        Block types you MUST use:
+        1. "text" blocks: For ALL explanatory text, context, greetings, and transitions
+           - content MUST have a "markdown" property with your text
+        2. "book_card" blocks: For individual book recommendations
+           - content MUST include: isbn, title, author, rating, genres (array), price, image_url, description
+        3. "book_list" blocks: For multiple related books
+           - content MUST have: title (string) and books (array of book objects)
 
-        Example structure:
-        [
-          {"type": "text", "content": {"markdown": "Based on your interest in mystery novels, I have some recommendations:"}},
-          {"type": "book_card", "content": {book details}},
-          {"type": "text", "content": {"markdown": "If you enjoy psychological thrillers, you might also like:"}},
-          {"type": "book_list", "content": {list of books}},
-          {"type": "text", "content": {"markdown": "These books share similar themes of suspense and unexpected twists."}}
-        ]
+        REQUIRED: Always include text blocks to make your response conversational:
+        - Start with a text block to greet or acknowledge the user's request
+        - Add text blocks between book recommendations to provide context
+        - End with a text block to conclude or ask if they need more help
+
+        Example of a complete response:
+        {
+          "blocks": [
+            {
+              "type": "text",
+              "content": {
+                "markdown": "I'd be happy to recommend some mystery novels for you!"
+              }
+            },
+            {
+              "type": "book_card",
+              "content": {
+                "isbn": "978-0-00-000000-0",
+                "title": "The Mystery Book",
+                "author": "John Doe",
+                "rating": 4.5,
+                "genres": ["Mystery", "Thriller"],
+                "price": 19.99,
+                "image_url": "https://example.com/book.jpg",
+                "description": "A thrilling mystery novel"
+              }
+            },
+            {
+              "type": "text",
+              "content": {
+                "markdown": "This book is perfect for fans of psychological thrillers. Would you like more recommendations?"
+              }
+            }
+          ]
+        }
 
         #{parser.get_format_instructions}
       INSTRUCTIONS

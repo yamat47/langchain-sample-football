@@ -18,7 +18,10 @@ class BookAssistantService
       limit_message_history!
 
       # Detect if this is a book-related query
-      if book_related_query?(message)
+      is_book_related = book_related_query?(message)
+      Rails.logger.info "Book Assistant Query: '#{message}' - Book Related: #{is_book_related}"
+      
+      if is_book_related
         process_with_blocks(message, start_time)
       else
         process_standard(message, start_time)
@@ -57,10 +60,14 @@ class BookAssistantService
     )
 
     response = messages.last
+    
+    # Log the raw response for debugging
+    Rails.logger.info "Book Assistant Raw Response: #{response.content}"
 
     # Try to parse as structured response
     begin
       structured_response = parser.parse(response.content)
+      Rails.logger.info "Book Assistant Parsed Blocks: #{structured_response["blocks"]&.size || 0} blocks"
       @messages << { role: "assistant", content: response.content }
 
       response_time_ms = ((Time.current - start_time) * 1000).round
@@ -113,11 +120,22 @@ class BookAssistantService
   end
 
   def build_assistant_with_blocks_instructions
-    Langchain::Assistant.new(
+    assistant = Langchain::Assistant.new(
       llm: llm_client,
       instructions: assistant_instructions_with_blocks,
       tools: available_tools
     )
+    
+    # Restore conversation history to the assistant
+    @messages.each do |msg|
+      # Ensure role is a string and valid
+      role = msg[:role].to_s
+      next unless ["system", "assistant", "user", "tool"].include?(role)
+      
+      assistant.add_message(role: role, content: msg[:content])
+    end
+    
+    assistant
   end
 
   def assistant_instructions_with_blocks
